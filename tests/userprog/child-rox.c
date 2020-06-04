@@ -46,6 +46,7 @@ main (int argc UNUSED, char *argv[])
       if (!(child = fork ("child-rox"))){
         exec (cmd);
       }
+
       if (child < 0)
         fail ("fork() returned %d", child);
       quiet = true;
