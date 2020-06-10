@@ -72,7 +72,8 @@ process_create_initd (const char *command) {
 static void
 initd (void *command) {
 #ifdef VM
-	supplemental_page_table_init (&thread_current ()->spt);
+	if (!supplemental_page_table_init (&thread_current ()->spt))
+		PANIC("Fail to launch initd (spt initializer)\n");
 #endif
 
 	process_init ();
@@ -185,8 +186,8 @@ __do_fork (void *aux) {
 
 	process_activate (current);
 #ifdef VM
-	supplemental_page_table_init (&current->spt);
-	if (!supplemental_page_table_copy (&current->spt, &parent->spt))
+	if (!supplemental_page_table_init (&current->spt)
+			|| !supplemental_page_table_copy (&current->spt, &parent->spt))
 		goto error;
 #else
 	if (!pml4_for_each (parent->pml4, duplicate_pte, parent))
