@@ -3,6 +3,12 @@
 #include "threads/malloc.h"
 #include "vm/vm.h"
 #include "vm/inspect.h"
+#include "threads/vaddr.h"
+#include "threads/malloc.h"
+#include <hash.h>
+
+static hash_hash_func spt_hash_func;
+static hash_less_func spt_less_func;
 
 /* Initializes the virtual memory subsystem by invoking each subsystem's
  * intialize codes. */
@@ -62,21 +68,31 @@ err:
 
 /* Find VA from spt and return page. On error, return NULL. */
 struct page *
-spt_find_page (struct supplemental_page_table *spt UNUSED, void *va UNUSED) {
-	struct page *page = NULL;
-	/* TODO: Fill this function. */
+spt_find_page (struct supplemental_page_table *spt, void *va) {
+	struct spt_entry temp;
+	struct hash_elem *elem
 
-	return page;
+	temp->page_va = pg_round_down(va);
+	elem = hash_find(&spt->table, &temp->h_elem);
+	return (!elem)? NULL: hash_entry(elem, struct spt_entry, h_elem)->upage;
 }
 
 /* Insert PAGE into spt with validation. */
 bool
-spt_insert_page (struct supplemental_page_table *spt UNUSED,
-		struct page *page UNUSED) {
-	int succ = false;
-	/* TODO: Fill this function. */
+spt_insert_page (struct supplemental_page_table *spt, struct page *page) {
+	struct spt_entry *entry;
 
-	return succ;
+	entry = (struct spt_entry*)malloc (sizeof (struct spt_entry));
+	if (!entry)
+		return false;
+	entry->page_va = page->va;
+	entry->upage = page;
+	if (hash_insert (&spt->table, &entry->h_elem)) {
+		//The page is already in the table
+		free (entry);
+		return false;
+	}
+	return true;
 }
 
 void
@@ -171,9 +187,29 @@ vm_do_claim_page (struct page *page) {
 	return swap_in (page, frame->kva);
 }
 
+/* Hash function for a supplemental_page_table entry holding a hash_elem E. */
+static unsigned
+spt_hash_func (const struct hash_elem *e, void *aux UNUSED) {
+	struct spt_entry *entry = hash_entry (e, struct spt_entry, h_elem);
+	void **page_va = &entry->page_va;
+	return hash_bytes (page_va, sizeof (*page_va));
+}
+
+/* Default function for comparison between two hash elements A and B that belong
+ * to a supplemental_page_table entry (spt_entry).
+ * Returns TRUE if A belongs to a spt_entry whose page_va value is less than
+	 B's. */
+static bool
+spt_less_func (const struct hash_elem *a, const struct hash_elem *b, void *aux UNUSED) {
+	struct spt_entry *a_entry = hash_entry (a, struct spt_entry, h_elem);
+	struct spt_entry *b_entry = hash_entry (b, struct spt_entry, h_elem);
+	return a_entry->page_va < b_entry->page_va;
+}
+
 /* Initialize new supplemental page table */
-void
-supplemental_page_table_init (struct supplemental_page_table *spt UNUSED) {
+bool
+supplemental_page_table_init (struct supplemental_page_table *spt) {
+	return hash_init (&spt->table, spt_hash_func, spt_less_func, NULL);
 }
 
 /* Copy supplemental page table from src to dst */
@@ -186,5 +222,7 @@ supplemental_page_table_copy (struct supplemental_page_table *dst UNUSED,
 void
 supplemental_page_table_kill (struct supplemental_page_table *spt UNUSED) {
 	/* TODO: Destroy all the supplemental_page_table hold by thread and
-	 * TODO: writeback all the modified contents to the storage. */
+	 * TODO: writeback all the modified contents to the storage.
+	 * TODO: Handle page table initialization error (i.e. no lists allocated with
+	 	hash_init())*/
 }
