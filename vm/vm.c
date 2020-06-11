@@ -47,7 +47,7 @@ static struct frame *vm_evict_frame (void);
  * page, do not create it directly and make it through this function or
  * `vm_alloc_page`. */
 bool
-vm_alloc_page_with_initializer (enum vm_type type, void *upage, bool writable,
+vm_alloc_page_with_initializer (enum vm_type type, void *va, bool writable,
 		vm_initializer *init, void *aux) {
 
 	ASSERT (VM_TYPE(type) != VM_UNINIT)
@@ -55,12 +55,29 @@ vm_alloc_page_with_initializer (enum vm_type type, void *upage, bool writable,
 	struct supplemental_page_table *spt = &thread_current ()->spt;
 
 	/* Check wheter the upage is already occupied or not. */
-	if (spt_find_page (spt, upage) == NULL) {
+	if (spt_find_page (spt, va) == NULL) {
 		/* TODO: Create the page, fetch the initialier according to the VM type,
 		 * TODO: and then create "uninit" page struct by calling uninit_new. You
 		 * TODO: should modify the field after calling the uninit_new. */
+		struct page *newpage;
+		switch (VM_TYPE(type)){
+			case VM_ANON:
+				void (*init_pointer)(struct page *, enum vm_type, void *) = &anon_initializer;
+				break;
+			case VM_FILE:
+				void (*init_pointer)(struct page *, enum vm_type, void *) = &file_map_initializer;
+				break;
+			default:
+				assert(0);
+		}
 
+		uninit_new(newpage, va, init, type, aux, init_pointer);
 		/* TODO: Insert the page into the spt. */
+		struct spt_entry temp;
+		temp->page_va = va;
+		temp->upage = newpage;
+		hash_insert(&spt->table, temp->h_elem);
+		return true;
 	}
 err:
 	return false;
