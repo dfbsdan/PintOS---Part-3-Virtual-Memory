@@ -630,18 +630,26 @@ load (const char *command, struct intr_frame *if_) {
 	/* Allocate and activate page directory. */
 	t->pml4 = pml4_create ();
 	if (t->pml4 == NULL)
-		goto done;
+	{
+		printf("{0}\n"); ////////////////////////////////////////////////////////////TEMPORAL: TESTING
+		return false;
+	}
 	process_activate (thread_current ());
 
 	/* Avoid race conditions by copying the command. */
 	command_copy = (char*)malloc (strlen (command) + 1);
 	if (command_copy == NULL)
+	{
+		printf("{1}\n"); ////////////////////////////////////////////////////////////TEMPORAL: TESTING
 		return false;
+	}
   strlcpy (command_copy, command, strlen (command) + 1);
   file_name = strtok_r (command_copy, " ", &save_ptr);
 	if (file_name == NULL)
+	{
+		printf("{2}\n"); ////////////////////////////////////////////////////////////TEMPORAL: TESTING
 		goto done;
-
+	}
 	/* Open executable file. */
 	file = filesys_open (file_name);
 	if (file == NULL) {
@@ -709,7 +717,10 @@ load (const char *command, struct intr_frame *if_) {
 					}
 					if (!load_segment (file, file_page, (void *) mem_page,
 								read_bytes, zero_bytes, writable))
+					{
+						printf("{3}\n"); ////////////////////////////////////////////////////TEMPORAL: TESTING
 						goto done;
+					}
 				}
 				else
 					goto done;
@@ -721,8 +732,10 @@ load (const char *command, struct intr_frame *if_) {
 	argc = get_argc (command);
   argv = parse_command (argc, file_name, save_ptr);
 	if (!setup_stack (if_, argc, argv))
+	{
+		printf("{4}\n"); ////////////////////////////////////////////////////////////TEMPORAL: TESTING
 		goto done;
-
+	}
 	/* Start address. */
 	if_->rip = ehdr.e_entry;
 
