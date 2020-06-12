@@ -10,6 +10,12 @@
 static hash_hash_func spt_hash_func;
 static hash_less_func spt_less_func;
 
+/* Checks if a given address corresponds to the one of a page. */
+static bool
+is_page_addr (void *va) {
+	return pg_round_down (va) == va;
+}
+
 /* Initializes the virtual memory subsystem by invoking each subsystem's
  * intialize codes. */
 void
@@ -70,9 +76,12 @@ err:
 struct page *
 spt_find_page (struct supplemental_page_table *spt, void *va) {
 	struct spt_entry temp;
-	struct hash_elem *elem
+	struct hash_elem *elem;
 
-	temp->page_va = pg_round_down(va);
+	ASSERT (spt);
+	ASSERT (is_page_addr (va)); //Debugging purposes: May be incorrect
+
+	temp->page_va = va;
 	elem = hash_find(&spt->table, &temp->h_elem);
 	return (!elem)? NULL: hash_entry(elem, struct spt_entry, h_elem)->upage;
 }
@@ -81,6 +90,11 @@ spt_find_page (struct supplemental_page_table *spt, void *va) {
 bool
 spt_insert_page (struct supplemental_page_table *spt, struct page *page) {
 	struct spt_entry *entry;
+
+	ASSERT (spt);
+	ASSERT (page);
+	ASSERT (page->va);
+	ASSERT (is_page_addr (page->va)); //Debugging purposes: May be incorrect
 
 	entry = (struct spt_entry*)malloc (sizeof (struct spt_entry));
 	if (!entry)
@@ -126,11 +140,19 @@ vm_evict_frame (void) {
  * space.*/
 static struct frame *
 vm_get_frame (void) {
-	struct frame *frame = NULL;
-	/* TODO: Fill this function. */
+	struct frame *frame;
+	void *kva;
 
-	ASSERT (frame != NULL);
-	ASSERT (frame->page == NULL);
+	kva = palloc_get_page (PAL_USER);
+	if (!kva)
+		PANIC ("TODO: Evict a frame");
+
+	ASSERT (is_page_addr (kva)); //Debugging purposes: May be incorrect
+
+	frame = (struct frame*)malloc (sizeof (struct frame));
+	ASSERT (frame);
+	frame->kva = kva;
+	frame->page = NULL;
 	return frame;
 }
 
@@ -166,10 +188,16 @@ vm_dealloc_page (struct page *page) {
 
 /* Claim the page that allocate on VA. */
 bool
-vm_claim_page (void *va UNUSED) {
-	struct page *page = NULL;
-	/* TODO: Fill this function */
+vm_claim_page (void *va) {
+	struct page *page;
 
+	ASSERT (va);
+	ASSERT (is_page_addr (va)); //Debugging purposes: May be incorrect
+
+	page = (struct page*)malloc (sizeof (struct page));
+	if (!page)
+		return false;
+	page->va = va;
 	return vm_do_claim_page (page);
 }
 
@@ -177,21 +205,31 @@ vm_claim_page (void *va UNUSED) {
 static bool
 vm_do_claim_page (struct page *page) {
 	struct frame *frame = vm_get_frame ();
+	uint64_t *pml4 = thread_current ()->pml4;
+	bool writable = true;																													//Is this correct?
+
+	ASSERT (page && page->va);
+	ASSERT (is_page_addr (page->va)); //Debugging purposes: May be incorrect
 
 	/* Set links */
 	frame->page = page;
 	page->frame = frame;
-
-	/* TODO: Insert page table entry to map page's VA to frame's PA. */
-
-	return swap_in (page, frame->kva);
+	/* Insert page table entry to map page's VA to frame's PA. */
+	return (pml4_set_page (pml4, page->va, frame->kva, writable))?
+			swap_in (page, frame->kva): false;
 }
 
 /* Hash function for a supplemental_page_table entry holding a hash_elem E. */
 static unsigned
 spt_hash_func (const struct hash_elem *e, void *aux UNUSED) {
-	struct spt_entry *entry = hash_entry (e, struct spt_entry, h_elem);
-	void **page_va = &entry->page_va;
+	struct spt_entry *entry;
+	void **page_va;
+
+	ASSERT (e);
+
+	entry = hash_entry (e, struct spt_entry, h_elem);
+	page_va = &entry->page_va;
+	ASSERT (is_page_addr (*page_va)); //Debugging purposes: May be incorrect
 	return hash_bytes (page_va, sizeof (*page_va));
 }
 
@@ -201,8 +239,15 @@ spt_hash_func (const struct hash_elem *e, void *aux UNUSED) {
 	 B's. */
 static bool
 spt_less_func (const struct hash_elem *a, const struct hash_elem *b, void *aux UNUSED) {
-	struct spt_entry *a_entry = hash_entry (a, struct spt_entry, h_elem);
-	struct spt_entry *b_entry = hash_entry (b, struct spt_entry, h_elem);
+	struct spt_entry *a_entry;
+	struct spt_entry *b_entry;
+
+	ASSERT (a && b);
+
+	a_entry = hash_entry (a, struct spt_entry, h_elem);
+	b_entry = hash_entry (b, struct spt_entry, h_elem);
+	ASSERT (is_page_addr (a_entry->page_va)); //Debugging purposes: May be incorrect
+	ASSERT (is_page_addr (b_entry->page_va)); //Debugging purposes: May be incorrect
 	return a_entry->page_va < b_entry->page_va;
 }
 
