@@ -344,8 +344,10 @@ process_exec (void *command_) {
 	/* If load failed, quit. */
 	palloc_free_page (command);
 	if (!success)
+	{
+		printf("{5}\n"); ////////////////////////////////////////////////////////////TEMPORAL: TESTING
 		return -1;
-
+	}
 	/* Start switched process. */
 	do_iret (&_if);
 	NOT_REACHED ();
