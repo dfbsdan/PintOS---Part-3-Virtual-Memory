@@ -233,6 +233,20 @@ supplemental_page_table_init (struct supplemental_page_table *spt) {
 bool
 supplemental_page_table_copy (struct supplemental_page_table *dst UNUSED,
 		struct supplemental_page_table *src UNUSED) {
+	hash_init (&dst->table, spt_hash_func, spt_less_func, NULL);
+	struct hash_iterator i;
+	hash_first (&i, &src->table);
+	while (hash_next (&i)) {
+	    struct spt_entry *entry = hash_entry (hash_cur (&i), struct spt_entry, h_elem);
+	    struct spt_entry *copy;
+			copy->page_va = entry->page_va;
+			struct page *src_page = entry->upage;
+			struct page *dst_page;
+			/*Allocate uninit page and claim it*/
+
+			hash_insert (&dst->table, &copy->h_elem);
+
+	}
 }
 
 /* Free the resource hold by the supplemental page table */
@@ -242,4 +256,12 @@ supplemental_page_table_kill (struct supplemental_page_table *spt UNUSED) {
 	 * TODO: writeback all the modified contents to the storage.
 	 * TODO: Handle page table initialization error (i.e. no lists allocated with
 	 	hash_init())*/
+
+		struct hash_iterator i;
+		hash_first (&i, &spt->table);
+		while (hash_next (&i)) {
+		    struct spt_entry *entry = hash_entry (hash_cur (&i), struct spt_entry, h_elem);
+				destroy(entry->upage);
+		}
+
 }
