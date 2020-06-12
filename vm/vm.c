@@ -4,6 +4,7 @@
 #include "vm/vm.h"
 #include "vm/inspect.h"
 #include "threads/vaddr.h"
+#include "threads/mmu.h"
 #include "threads/malloc.h"
 #include <hash.h>
 
@@ -81,8 +82,8 @@ spt_find_page (struct supplemental_page_table *spt, void *va) {
 	ASSERT (spt);
 	ASSERT (is_page_addr (va)); //Debugging purposes: May be incorrect
 
-	temp->page_va = va;
-	elem = hash_find(&spt->table, &temp->h_elem);
+	temp.page_va = va;
+	elem = hash_find(&spt->table, &temp.h_elem);
 	return (!elem)? NULL: hash_entry(elem, struct spt_entry, h_elem)->upage;
 }
 
@@ -220,7 +221,7 @@ vm_do_claim_page (struct page *page) {
 }
 
 /* Hash function for a supplemental_page_table entry holding a hash_elem E. */
-static unsigned
+static uint64_t
 spt_hash_func (const struct hash_elem *e, void *aux UNUSED) {
 	struct spt_entry *entry;
 	void **page_va;
