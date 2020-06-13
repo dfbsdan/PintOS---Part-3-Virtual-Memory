@@ -55,21 +55,21 @@ static struct frame *vm_evict_frame (void);
  * `vm_alloc_page`. */
 bool
 vm_alloc_page_with_initializer (enum vm_type type, void *va, bool writable,
-		vm_initializer *init, void *aux) {
+		vm_initializer *init UNUSED, void *aux UNUSED) {
 	struct supplemental_page_table *spt = &thread_current ()->spt;
 	struct page *new_page;
-	bool (*init_pointer)(struct page *, enum vm_type, void *);
 
 	ASSERT (VM_TYPE (type) != VM_UNINIT);
 	ASSERT (va && is_page_addr (va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
 
 	/* Check wheter the upage is already occupied or not. */
 	if (!spt_find_page (spt, va)) {
+		bool (*init_pointer)(struct page *, enum vm_type, void *);
 		/* Create the page, fetch the initialier according to the VM type,
 		 * and then create "uninit" page struct by calling uninit_new. */
 		new_page = (struct page*)malloc (sizeof (struct page));
 		if (!new_page)
-			return false
+			return false;
 		switch (VM_TYPE (type)) {
 			case VM_ANON:
 				init_pointer = anon_initializer;
@@ -115,7 +115,6 @@ spt_insert_page (struct supplemental_page_table *spt, struct page *page) {
 void
 spt_remove_page (struct supplemental_page_table *spt, struct page *page) {
 	vm_dealloc_page (page);
-	return true;
 }
 
 /* Get the struct frame, that will be evicted. */
@@ -200,7 +199,7 @@ vm_claim_page (void *va) {
 	ASSERT (va);
 	ASSERT (is_page_addr (va)); //////////////////////////////////////////////////Debugging purposes: May be incorrect
 
-	page = spt_find_page (thread_current ()->spt, va);
+	page = spt_find_page (&thread_current ()->spt, va);
 	if (!page) //The page does not exist
 		return false;
 	ASSERT (page->va == va);
@@ -278,15 +277,15 @@ supplemental_page_table_copy (struct supplemental_page_table *dst,
 	page_cnt = src->table.elem_cnt;
 	if (page_cnt == 0)
 		return true;
-	page_arr = (struct page*)calloc (page_cnt, sizeof (struct page));
-	if (!page_arr)
+	new_pages = (struct page*)calloc (page_cnt, sizeof (struct page));
+	if (!new_pages)
 		return false;
 	/* Copy all pages. */
 	hash_first (&it, &src->table);
 	for (size_t i = 0; i < page_cnt; i++) {
 		elem = hash_next (&it);
 		ASSERT (elem);
-		page = hash_entry (elem, struct page, h_elem)
+		page = hash_entry (elem, struct page, h_elem);
 		new_page = &new_pages[i];
 		page_copy (new_page, page);
 		ASSERT (hash_insert (&dst->table, &new_page->h_elem) == NULL);
