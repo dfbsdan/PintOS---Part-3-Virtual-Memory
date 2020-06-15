@@ -41,10 +41,8 @@ struct thread;
 struct page {
 	const struct page_operations *operations;
 	void *va;              /* Address in terms of user space */
-	struct frame *frame;   /* Back reference for frame */
-
-	/* Your implementation */
-
+	struct frame *frame;   /* Back reference for frame. */
+	struct hash_elem h_elem; /* Element in the supplemental page table. */
 	/* Per-type data are binded into the union.
 	 * Each function automatically detects the current union */
 	union {
@@ -79,17 +77,9 @@ struct page_operations {
 #define destroy(page) \
 	if ((page)->operations->destroy) (page)->operations->destroy (page)
 
-/* Representation of current process's memory space.
- * We don't want to force you to obey any specific design for this struct.
- * All designs up to you for this. */
+/* Representation of current process's memory space. */
 struct supplemental_page_table {
 	struct hash table;
-};
-
-struct spt_entry{
-	void *page_va;
-	struct page *upage;
-	struct hash_elem h_elem;
 };
 
 #include "threads/thread.h"
