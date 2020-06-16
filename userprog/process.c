@@ -26,7 +26,7 @@
 
 static struct terminated_child_st *terminated_child (tid_t child_tid);
 static bool active_child (tid_t child_tid);
-static void process_cleanup (void);
+static void process_cleanup (bool exit);
 static bool load (const char *command, struct intr_frame *if_);
 static void initd (void *command);
 static void __do_fork (void *);
@@ -336,7 +336,7 @@ process_exec (void *command_) {
 	_if.eflags = FLAG_IF | FLAG_MBS;
 
 	/* We first kill the current context */
-	process_cleanup ();
+	process_cleanup (false);
 
 	/* And then load the binary */
 	success = load (command, &_if);
@@ -513,16 +513,19 @@ process_exit (int status) {
 			child->parent = NULL;
 		}
 	}
-	process_cleanup ();
+	process_cleanup (true);
 }
 
-/* Free the current process's resources. */
+/* Free the current process's resources. The EXIT argument defines if the
+ * cleanup process is done in order to finish a process completely (i.e.
+ * process_exit ()), or in order to change its execution context (i.e.
+ * process_exec ()). */
 static void
-process_cleanup (void) {
+process_cleanup (bool exit) {
 	struct thread *curr = thread_current ();
 
 #ifdef VM
-	supplemental_page_table_kill (&curr->spt);
+	supplemental_page_table_kill (&curr->spt, exit);
 #endif
 
 	uint64_t *pml4;

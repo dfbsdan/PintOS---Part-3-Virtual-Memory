@@ -9,11 +9,12 @@
 
 static hash_hash_func spt_hash_func;
 static hash_less_func spt_less_func;
+static hash_action_func spt_page_destructor;
 static void page_copy (struct page *new_page, struct page *old_page);
 
 /* Checks if a given address corresponds to the one of a page. */
-static bool
-is_page_addr (void *va) {
+bool
+vm_is_page_addr (void *va) {
 	return pg_round_down (va) == va;
 }
 
@@ -60,7 +61,7 @@ vm_alloc_page_with_initializer (enum vm_type type, void *va, bool writable,
 	struct page *new_page;
 
 	ASSERT (VM_TYPE (type) != VM_UNINIT);
-	ASSERT (va && is_page_addr (va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (va && vm_is_page_addr (va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
 
 	/* Check wheter the upage is already occupied or not. */
 	if (!spt_find_page (spt, va)) {
@@ -96,7 +97,7 @@ spt_find_page (struct supplemental_page_table *spt, void *va) {
 	struct hash_elem *elem;
 
 	ASSERT (spt);
-	ASSERT (is_page_addr (va)); //////////////////////////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (vm_is_page_addr (va)); //////////////////////////////////////////////////Debugging purposes: May be incorrect
 
 	temp.va = va;
 	elem = hash_find (&spt->table, &temp.h_elem);
@@ -108,13 +109,15 @@ bool
 spt_insert_page (struct supplemental_page_table *spt, struct page *page) {
 	ASSERT (spt);
 	ASSERT (page && page->va);
-	ASSERT (is_page_addr (page->va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (vm_is_page_addr (page->va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
 	return hash_insert (&spt->table, &page->h_elem) == NULL;
 }
 
 void
 spt_remove_page (struct supplemental_page_table *spt, struct page *page) {
-	vm_dealloc_page (page);
+	ASSERT (spt);
+	ASSERT (page);
+	spt_page_destructor (&page->h_elem, spt);
 }
 
 /* Get the struct frame, that will be evicted. */
@@ -151,7 +154,7 @@ vm_get_frame (void) {
 		if (!frame)
 			PANIC ("Could not evict a frame");
 	} else {
-		ASSERT (is_page_addr (kva)); ///////////////////////////////////////////////Debugging purposes: May be incorrect
+		ASSERT (vm_is_page_addr (kva)); ///////////////////////////////////////////////Debugging purposes: May be incorrect
 		frame = (struct frame*)malloc (sizeof (struct frame));
 		if (!frame)
 			PANIC ("Insufficient space for a frame");
@@ -184,6 +187,7 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr UNUSED,
 }
 
 /* Free the page.
+ * The page MUST NOT belong to any spt, in such case use spt_remove_page instead.
  * DO NOT MODIFY THIS FUNCTION. */
 void
 vm_dealloc_page (struct page *page) {
@@ -197,7 +201,7 @@ vm_claim_page (void *va) {
 	struct page *page;
 
 	ASSERT (va);
-	ASSERT (is_page_addr (va)); //////////////////////////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (vm_is_page_addr (va)); //////////////////////////////////////////////////Debugging purposes: May be incorrect
 
 	page = spt_find_page (&thread_current ()->spt, va);
 	if (!page) //The page does not exist
@@ -214,7 +218,7 @@ vm_do_claim_page (struct page *page) {
 	bool writable = true;/////////////////////////////////////////////////////////CHANGE: Must be obtained from page
 
 	ASSERT (page && page->va);
-	ASSERT (is_page_addr (page->va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (vm_is_page_addr (page->va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
 	ASSERT (!pml4_get_page (pml4, page->va)); //Must NOT be mapped already ///////Use return instead of assert?
 
 	/* Set links */
@@ -228,13 +232,13 @@ vm_do_claim_page (struct page *page) {
 
 /* Hash function for a supplemental_page_table page holding a hash_elem E. */
 static uint64_t
-spt_hash_func (const struct hash_elem *e, void *aux UNUSED) {
+spt_hash_func (const struct hash_elem *e, void *spt_ UNUSED) {
 	struct page *page;
 
 	ASSERT (e);
 
 	page = hash_entry (e, struct page, h_elem);
-	ASSERT (is_page_addr (page->va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (vm_is_page_addr (page->va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
 	return hash_bytes (&page->va, sizeof (page->va));
 }
 
@@ -243,15 +247,15 @@ spt_hash_func (const struct hash_elem *e, void *aux UNUSED) {
  * Returns TRUE if A belongs to a page whose va value is less than B's. */
 static bool
 spt_less_func (const struct hash_elem *a, const struct hash_elem *b,
-		void *aux UNUSED) {
+		void *spt_ UNUSED) {
 	struct page *a_page, *b_page;
 
 	ASSERT (a && b);
 
 	a_page = hash_entry (a, struct page, h_elem);
 	b_page = hash_entry (b, struct page, h_elem);
-	ASSERT (is_page_addr (a_page->va)); //////////////////////////////////////////Debugging purposes: May be incorrect
-	ASSERT (is_page_addr (b_page->va)); //////////////////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (vm_is_page_addr (a_page->va)); //////////////////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (vm_is_page_addr (b_page->va)); //////////////////////////////////////////Debugging purposes: May be incorrect
 	return a_page->va < b_page->va;
 }
 
@@ -259,6 +263,8 @@ spt_less_func (const struct hash_elem *a, const struct hash_elem *b,
 bool
 supplemental_page_table_init (struct supplemental_page_table *spt) {
 	ASSERT (spt);
+	
+	spt->table.aux = spt;
 	return hash_init (&spt->table, spt_hash_func, spt_less_func, NULL);
 }
 
@@ -299,26 +305,40 @@ static void
 page_copy (struct page *new_page, struct page *old_page) {
 	ASSERT (new_page && old_page);
 
+	new_page->operations = old_page->operations;
 	new_page->va = old_page->va;
 	ASSERT (0); //////////////////////////////////////////////////////////////////Not finished (copy-on-write?)
 }
 
-/* Free the resource hold by the supplemental page table */
+/* Free the resource held by the supplemental page table.
+ * The EXIT argument defines if the table is being killed in order to finish a
+ * process completely (i.e. by process_exit ()), or in order to change its
+ * execution context (i.e. process_exec ()). */
 void
-supplemental_page_table_kill (struct supplemental_page_table *spt) {
-	struct hash_iterator it;
-	struct hash_elem *elem;
-	struct page *page;
-
+supplemental_page_table_kill (struct supplemental_page_table *spt, bool exit) {
 	ASSERT (spt);
 	/* Destroy all the supplemental_page_table hold by thread and
 	 * ///////////////////////////////////////////////////////////////////////////TODO: writeback all the modified contents to the storage (done in destroy?). */
-	if (spt->table.buckets) { //I.e. there was no error on hash_init()
-		hash_first (&it, &spt->table);
-		while ((elem = hash_next (&it)) != NULL) {
-			page = hash_entry (elem, struct page, h_elem);
-			destroy(page);
-		}
-		hash_destroy (&spt->table, NULL);
-	}
+	if (spt->table.buckets) { //I.e. make sure there was no error on hash_init()
+		if (exit)
+			hash_destroy (&spt->table, spt_page_destructor);
+		else
+			hash_clear (&spt->table, spt_page_destructor);
+	} else
+		ASSERT (exit); //Error in hash_init() so the process must be terminating
+}
+
+/* Default destructor for a page holding a h_elem E. */
+static void
+spt_page_destructor (struct hash_elem *e, void *spt_) {
+	struct page *page;
+	struct supplemental_page_table *spt = (struct supplemental_page_table*)spt_;
+
+	ASSERT (e);
+	ASSERT (spt);
+
+	page = hash_entry (e, struct page, h_elem);
+	if (hash_find (&spt->table, &page->h_elem)) //Page not yet removed from spt
+		ASSERT (hash_delete (&spt->table, &page->h_elem) == &page->h_elem));
+	vm_dealloc_page (page);
 }

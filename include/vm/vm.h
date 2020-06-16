@@ -82,11 +82,13 @@ struct supplemental_page_table {
 	struct hash table;
 };
 
+bool vm_is_page_addr (void *va);
+
 #include "threads/thread.h"
 bool supplemental_page_table_init (struct supplemental_page_table *spt);
 bool supplemental_page_table_copy (struct supplemental_page_table *dst,
 		struct supplemental_page_table *src);
-void supplemental_page_table_kill (struct supplemental_page_table *spt);
+void supplemental_page_table_kill (struct supplemental_page_table *spt, bool exit);
 struct page *spt_find_page (struct supplemental_page_table *spt,
 		void *va);
 bool spt_insert_page (struct supplemental_page_table *spt, struct page *page);

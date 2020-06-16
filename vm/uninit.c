@@ -28,6 +28,7 @@ uninit_new (struct page *page, void *va, vm_initializer *init,
 		enum vm_type type, void *aux,
 		bool (*initializer)(struct page *, enum vm_type, void *)) {
 	ASSERT (page != NULL);
+	ASSERT (vm_is_page_addr (va));////////////////////////////////////////////////Debugging purposes: May be incorrect
 
 	*page = (struct page) {
 		.operations = &uninit_ops,
@@ -56,13 +57,16 @@ uninit_initialize (struct page *page, void *kva) {
 		(init ? init (page, aux) : true);
 }
 
-/* Free the resources hold by uninit_page. Although most of pages are transmuted
+/* Free the resources hold by uninit_page, which must NOT be in the current
+ * thread's spt.
+ * Although most of pages are transmuted
  * to other page objects, it is possible to have uninit pages when the process
  * exit, which are never referenced during the execution.
  * PAGE will be freed by the caller. */
 static void
 uninit_destroy (struct page *page) {
 	struct uninit_page *uninit UNUSED = &page->uninit;
+	ASSERT (!spt_find_page (&thread_current ()->spt, page->va));
 	/* TODO: Fill this function.
 	 * TODO: If you don't have anything to do, just return. */
 }
