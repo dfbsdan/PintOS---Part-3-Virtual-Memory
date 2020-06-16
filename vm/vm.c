@@ -223,10 +223,15 @@ vm_do_claim_page (struct page *page) {
 	/* Set links */
 	frame->page = page;
 	page->frame = frame;
-	/* Insert page table entry to map page's VA to frame's PA and copy the data
-	 * from the swap memory into the frame. */
-	return (pml4_set_page (pml4, page->va, frame->kva, page->writable))?
-			swap_in (page, frame->kva): false;
+	/* Insert page table entry to map page's VA to frame's PA. */
+	if (!pml4_set_page (pml4, page->va, frame->kva, page->writable))
+		/* Correct way of handling swap_in error?
+		(Assumption so far: The page is already well-mapped so it can be destroyed
+		with no issue by the caller). */
+		return swap_in (page, frame->kva);//////////////////////////////////////////May have issues
+	palloc_free_page (frame->kva);
+	free (frame);
+	return false;
 }
 
 /* Hash function for a supplemental_page_table page holding a hash_elem E. */

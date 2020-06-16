@@ -108,6 +108,7 @@ anon_initializer (struct page *page, enum vm_type type, void *kva) {
 	/* Set up the handler */
 	page->operations = &anon_ops;
 	page->anon.page = page;
+	page->anon.a_type = (type & VM_MARKER_0)? STACK: OTHER;///////////////////////May need to be updated on addition of more anon types
 	return true;
 }
 
@@ -147,6 +148,7 @@ anon_swap_out (struct page *page) {
 
 	ASSERT (page && page->frame);
 	ASSERT (VM_TYPE (page->operations->type) == VM_ANON);
+	ASSERT (page->anon.a_type != STACK); //Do not swap out stack pages
 	kva = page->frame->kva;
 	ASSERT (kva && vm_is_page_addr (kva));////////////////////////////////////////Debugging purposes: May be incorrect
 	anon_page = &page->anon;

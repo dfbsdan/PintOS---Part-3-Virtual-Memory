@@ -16,10 +16,11 @@ enum vm_type {
 
 	/* Bit flags to store state */
 
-	/* Auxillary bit flag marker for store information. You can add more
-	 * markers, until the value is fit in the int. */
-	VM_MARKER_0 = (1 << 3),
-	VM_MARKER_1 = (1 << 4),
+	/* Auxillary bit flag marker for store information. */
+	VM_MARKER_0 = (1 << 3),	/* VM_ANON: Stack. */
+	VM_MARKER_1 = (1 << 4), /* VM_ANON: Other?. */
+	VM_MARKER_2 = (1 << 5),
+	VM_MARKER_3 = (1 << 6),
 
 	/* DO NOT EXCEED THIS VALUE. */
 	VM_MARKER_END = (1 << 31),

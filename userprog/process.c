@@ -1026,14 +1026,45 @@ static bool
 setup_stack (struct intr_frame *if_, int argc, char **argv) {
 	bool success = false;
 	void *stack_bottom = (void *) (((uint8_t *) USER_STACK) - PGSIZE);
+	uint8_t *esp = (uint8_t*)USER_STACK;
+	int i;
 
-	ASSERT (0);/////////////////////////////////////////////////////////////////////////////////////////REACHED UNTIL PROJ 3
-
-	/* TODO: Map the stack on stack_bottom and claim the page immediately.
-	 * TODO: If success, set the rsp accordingly.
-	 * TODO: You should mark the page is stack. */
-	/* TODO: Your code goes here */
-
-	return success;
+	/* Map the stack on stack_bottom and claim the page immediately. The page is
+	 * marked as stack automatically by including VM_MARKER_0 here (see
+	 * anon_initializer()). */
+	if (!(vm_alloc_page (VM_ANON | VM_MARKER_0, stack_bottom, true)
+			&& vm_claim_page (stack_bottom)))
+		return false;
+	/* Push all the arguments in decreasing order. */
+	for (i = argc - 1; i >= 0; i--) {
+			esp -= strlen (argv[i]) + 1;
+			memcpy (esp, argv[i], strlen (argv[i]) + 1);
+			argv[i] = (char*)esp;
+	}
+	/* Align the arguments with the 64-bit system. */
+	i = 0;
+	while(((uint64_t)esp % 8) != 0) {
+			esp--;
+			i++;
+	}
+	ASSERT (i < 8);
+	memset (esp, 0, i);
+	/* Push NULL pointer (end of argv). */
+	esp -= sizeof (char*);
+	memset (esp, 0, sizeof (char*));
+	/* Push the address of each argument. */
+	for (i = argc - 1; i >= 0; i--) {
+			esp -= sizeof (char*);
+			memcpy (esp, &argv[i], sizeof (char*));
+	}
+	/* Set argument registers. */
+	if_->R.rdi = (uint64_t)argc;
+	if_->R.rsi = (uint64_t)esp;
+	/* Leave a space for the return address. */
+	esp -= sizeof (void*);
+	memset (esp, 0, sizeof (void*));
+	/* Set process' initial stack pointer. */
+	if_->rsp = (uintptr_t)esp;
+	return true;
 }
 #endif /* VM */
