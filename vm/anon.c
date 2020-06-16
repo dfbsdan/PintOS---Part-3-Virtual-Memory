@@ -25,7 +25,7 @@ static const struct page_operations anon_ops = {
 	.type = VM_ANON,
 };
 
-static const struct swap_table {
+static struct swap_table {
 	size_t size;						/* Number of pages in the swap_disk. */
 	struct bitmap *bitmap;	/* Bitmap that specifies if a swap memory slot is free
 													 * or not. The index in the map is the one of the page
@@ -76,7 +76,7 @@ swap_less_func (const struct hash_elem *a, const struct hash_elem *b,
 /* Maps the index of swap memory slot into the corresponding swap_disk sector. */
 static disk_sector_t
 index_to_sector (size_t idx) {
-	ASSERT (idx < swap_t->size);
+	ASSERT (idx < swap_t.size);
 	return (disk_sector_t)(idx * SECTORS_PER_PAGE);
 }
 
@@ -99,8 +99,6 @@ vm_anon_init (void) {
 /* Initialize the file mapping */
 bool
 anon_initializer (struct page *page, enum vm_type type, void *kva) {
-	struct anon_page *anon_page;
-
 	ASSERT (page && kva);
 	ASSERT (vm_is_page_addr (page->va));//////////////////////////////////////////Debugging purposes: May be incorrect
 	ASSERT (VM_TYPE (type) == VM_ANON);
@@ -108,7 +106,7 @@ anon_initializer (struct page *page, enum vm_type type, void *kva) {
 
 	/* Set up the handler */
 	page->operations = &anon_ops;
-	page->anon->page = page;
+	page->anon.page = page;
 	return true;
 }
 
@@ -187,7 +185,7 @@ anon_destroy (struct page *page) {
 		/* The page is in the main memory. */
 		struct frame *frame = page->frame;
 		ASSERT (frame && frame->page == page);
-		ASSERT (!hash_find (&swap_t.table, &anon_page->swap_elem);
+		ASSERT (!hash_find (&swap_t.table, &anon_page->swap_elem));
 		palloc_free_page (frame->kva);
 		free (frame);
 	} else { /* The page has been swapped. */
