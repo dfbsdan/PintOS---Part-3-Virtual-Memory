@@ -43,6 +43,7 @@ struct page {
 	void *va;              /* Address in terms of user space */
 	struct frame *frame;   /* Back reference for frame. */
 	struct hash_elem h_elem; /* Element in the supplemental page table. */
+	bool writable;					/* False: Read-only page. True otherwise. */
 	/* Per-type data are binded into the union.
 	 * Each function automatically detects the current union */
 	union {

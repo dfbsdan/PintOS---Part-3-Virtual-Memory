@@ -82,7 +82,7 @@ vm_alloc_page_with_initializer (enum vm_type type, void *va, bool writable,
 				ASSERT (0);
 		}
 		uninit_new (new_page, va, init, type, aux, init_pointer);
-		ASSERT (0); /////////////////////////////////////////////////////////////////* TODO: Handle WRITABLE variable. */
+		new_page->writable = writable;
 		/* Insert the page into the spt. */
 		ASSERT (spt_insert_page (spt, new_page));
 		return true;
@@ -215,7 +215,6 @@ static bool
 vm_do_claim_page (struct page *page) {
 	struct frame *frame = vm_get_frame ();
 	uint64_t *pml4 = thread_current ()->pml4;
-	bool writable = true;/////////////////////////////////////////////////////////CHANGE: Must be obtained from page
 
 	ASSERT (page && page->va);
 	ASSERT (vm_is_page_addr (page->va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
@@ -226,7 +225,7 @@ vm_do_claim_page (struct page *page) {
 	page->frame = frame;
 	/* Insert page table entry to map page's VA to frame's PA and copy the data
 	 * from the swap memory into the frame. */
-	return (pml4_set_page (pml4, page->va, frame->kva, writable))?
+	return (pml4_set_page (pml4, page->va, frame->kva, page->writable))?
 			swap_in (page, frame->kva): false;
 }
 
@@ -263,7 +262,7 @@ spt_less_func (const struct hash_elem *a, const struct hash_elem *b,
 bool
 supplemental_page_table_init (struct supplemental_page_table *spt) {
 	ASSERT (spt);
-	
+
 	spt->table.aux = spt;
 	return hash_init (&spt->table, spt_hash_func, spt_less_func, NULL);
 }
@@ -317,8 +316,7 @@ page_copy (struct page *new_page, struct page *old_page) {
 void
 supplemental_page_table_kill (struct supplemental_page_table *spt, bool exit) {
 	ASSERT (spt);
-	/* Destroy all the supplemental_page_table hold by thread and
-	 * ///////////////////////////////////////////////////////////////////////////TODO: writeback all the modified contents to the storage (done in destroy?). */
+	/* Destroy all the supplemental_page_table held by thread. */
 	if (spt->table.buckets) { //I.e. make sure there was no error on hash_init()
 		if (exit)
 			hash_destroy (&spt->table, spt_page_destructor);
@@ -339,6 +337,6 @@ spt_page_destructor (struct hash_elem *e, void *spt_) {
 
 	page = hash_entry (e, struct page, h_elem);
 	if (hash_find (&spt->table, &page->h_elem)) //Page not yet removed from spt
-		ASSERT (hash_delete (&spt->table, &page->h_elem) == &page->h_elem));
+		ASSERT (hash_delete (&spt->table, &page->h_elem) == &page->h_elem);
 	vm_dealloc_page (page);
 }

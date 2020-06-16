@@ -46,6 +46,7 @@ static void
 file_map_destroy (struct page *page) {
 	struct file_page *file_page UNUSED = &page->file;
 	ASSERT (!spt_find_page (&thread_current ()->spt, page->va));
+	/* TODO: writeback all the modified contents to the storage. */
 }
 
 /* Do the mmap */
