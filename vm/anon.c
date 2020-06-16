@@ -33,6 +33,14 @@ static const struct swap_table {
 	struct hash table;			/* Table that maps a page into its swap slot. */
 } swap_t;
 
+/* Checks and asserts if the swap_table "swap_t" is correct. */
+static void
+swap_check_table (void) {
+	ASSERT (
+		bitmap_count (swap_t.bitmap, 0, swap_t.size, true)
+				== hash_size (&swap_t.table));//////////////////////////////////////////May have synchronization issues
+}
+
 /* Hash function for a swap_table page holding a swap_elem E. */
 static uint64_t
 swap_hash_func (const struct hash_elem *e, void *aux UNUSED) {
@@ -107,7 +115,6 @@ anon_initializer (struct page *page, enum vm_type type, void *kva) {
 /* Swap in the page by read contents from the swap disk. */
 static bool
 anon_swap_in (struct page *page, void *kva) {
-	struct hash_elem *elem;
 	struct anon_page *anon_page;
 	disk_sector_t sector;
 
@@ -116,6 +123,7 @@ anon_swap_in (struct page *page, void *kva) {
 	ASSERT (kva && vm_is_page_addr (kva));////////////////////////////////////////Debugging purposes: May be incorrect
 	anon_page = &page->anon;
 	ASSERT (anon_page->page == page);
+	swap_check_table ();
 
 	if (hash_find (&swap_t.table, &anon_page->swap_elem)) {
 		ASSERT (bitmap_test (swap_t.bitmap, anon_page->idx));
@@ -136,6 +144,7 @@ static bool
 anon_swap_out (struct page *page) {
 	struct anon_page *anon_page;
 	void *kva;
+	disk_sector_t sector;
 
 	ASSERT (page && page->frame);
 	ASSERT (VM_TYPE (page->operations->type) == VM_ANON);
@@ -143,6 +152,7 @@ anon_swap_out (struct page *page) {
 	ASSERT (kva && vm_is_page_addr (kva));////////////////////////////////////////Debugging purposes: May be incorrect
 	anon_page = &page->anon;
 	ASSERT (anon_page->page == page);
+	swap_check_table ();
 
 	if (!hash_find (&swap_t.table, &anon_page->swap_elem)) {
 		/* Obtain a table entry to store the data. */
@@ -171,6 +181,7 @@ anon_destroy (struct page *page) {
 	ASSERT (VM_TYPE (page->operations->type) == VM_ANON);
 	anon_page = &page->anon;
 	ASSERT (anon_page->page == page);
+	swap_check_table ();
 
 	if (pml4_get_page (thread_current ()->pml4, page->va)) {
 		/* The page is in the main memory. */
