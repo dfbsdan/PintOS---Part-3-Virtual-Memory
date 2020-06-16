@@ -336,7 +336,8 @@ spt_page_destructor (struct hash_elem *e, void *spt_) {
 	ASSERT (spt);
 
 	page = hash_entry (e, struct page, h_elem);
-	if (hash_find (&spt->table, &page->h_elem)) //Page not yet removed from spt
+	if (hash_find (&spt->table, &page->h_elem)) { //Page not yet removed from spt
 		ASSERT (hash_delete (&spt->table, &page->h_elem) == &page->h_elem);
+	}
 	vm_dealloc_page (page);
 }

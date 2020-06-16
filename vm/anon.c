@@ -2,6 +2,7 @@
 
 #include "threads/mmu.h"
 #include "threads/thread.h"
+#include "threads/malloc.h"
 #include "devices/disk.h"
 #include <hash.h>
 #include <bitmap.h>
