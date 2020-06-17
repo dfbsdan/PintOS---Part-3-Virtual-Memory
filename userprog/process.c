@@ -345,7 +345,7 @@ process_exec (void *command_) {
 	palloc_free_page (command);
 	if (!success)
 	{
-		printf("{5}\n"); ////////////////////////////////////////////////////////////TEMPORAL: TESTING
+		printf("process_exec: loading failed\n"); //////////////////////////////////TEMPORAL: TESTING
 		return -1;
 	}
 	/* Start switched process. */
@@ -636,7 +636,7 @@ load (const char *command, struct intr_frame *if_) {
 	t->pml4 = pml4_create ();
 	if (t->pml4 == NULL)
 	{
-		printf("{0}\n"); ////////////////////////////////////////////////////////////TEMPORAL: TESTING
+		printf("load: pml4_create\n"); /////////////////////////////////////////////TEMPORAL: TESTING
 		return false;
 	}
 	process_activate (thread_current ());
@@ -645,14 +645,14 @@ load (const char *command, struct intr_frame *if_) {
 	command_copy = (char*)malloc (strlen (command) + 1);
 	if (command_copy == NULL)
 	{
-		printf("{1}\n"); ////////////////////////////////////////////////////////////TEMPORAL: TESTING
+		printf("load: command_copy\n"); ////////////////////////////////////////////TEMPORAL: TESTING
 		return false;
 	}
   strlcpy (command_copy, command, strlen (command) + 1);
   file_name = strtok_r (command_copy, " ", &save_ptr);
 	if (file_name == NULL)
 	{
-		printf("{2}\n"); ////////////////////////////////////////////////////////////TEMPORAL: TESTING
+		printf("load: file_name\n"); ///////////////////////////////////////////////TEMPORAL: TESTING
 		goto done;
 	}
 	/* Open executable file. */
@@ -723,7 +723,7 @@ load (const char *command, struct intr_frame *if_) {
 					if (!load_segment (file, file_page, (void *) mem_page,
 								read_bytes, zero_bytes, writable))
 					{
-						printf("{3}\n"); ////////////////////////////////////////////////////TEMPORAL: TESTING
+						printf("load: load_segment\n"); ////////////////////////////////////TEMPORAL: TESTING
 						goto done;
 					}
 				}
@@ -738,7 +738,7 @@ load (const char *command, struct intr_frame *if_) {
   argv = parse_command (argc, file_name, save_ptr);
 	if (!setup_stack (if_, argc, argv))
 	{
-		printf("{4}\n"); ////////////////////////////////////////////////////////////TEMPORAL: TESTING
+		printf("load: setup_stack\n"); /////////////////////////////////////////////TEMPORAL: TESTING
 		goto done;
 	}
 	/* Start address. */
@@ -977,7 +977,7 @@ lazy_load_segment (struct page *page, void *aux) {
 	/* TODO: Load the segment from the file */
 	/* TODO: This called when the first page fault occurs on address VA. */
 	/* TODO: VA is available when calling this function. */
-	printf("{6}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
+	printf("lazy_load_segment\n"); ///////////////////////////////////////////////TEMPORAL: TESTING
 	return false;
 }
 

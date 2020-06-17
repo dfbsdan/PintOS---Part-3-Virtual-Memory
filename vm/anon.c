@@ -51,7 +51,7 @@ swap_hash_func (const struct hash_elem *e, void *aux UNUSED) {
 
 	page = hash_entry (e, struct anon_page, swap_elem)->page;
 	ASSERT (VM_TYPE (page->operations->type) == VM_ANON);
-	ASSERT (vm_is_page_addr (page->va)); /////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (vm_is_page_addr (page->va)); /////////////////////////////////////////Debugging purposes: May be incorrect
 	return hash_bytes (&page, sizeof (page));
 }
 
@@ -106,6 +106,7 @@ anon_initializer (struct page *page, enum vm_type type, void *kva) {
 	ASSERT (page->frame && page->frame->kva == kva);
 
 	/* Set up the handler */
+	printf("anon_initializer: page: %p, kva: %p\n", page, kva);///////////////////TEMPORAL: TESTING
 	page->operations = &anon_ops;
 	page->anon.page = page;
 	page->anon.a_type = (type & VM_MARKER_0)? STACK: OTHER;///////////////////////May need to be updated on addition of more anon types
@@ -120,7 +121,7 @@ anon_swap_in (struct page *page, void *kva) {
 
 	ASSERT (page);
 	ASSERT (VM_TYPE (page->operations->type) == VM_ANON);
-	ASSERT (vm_is_page_addr (kva));////////////////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (vm_is_page_addr (kva));///////////////////////////////////////////////Debugging purposes: May be incorrect
 	anon_page = &page->anon;
 	ASSERT (anon_page->page == page);
 	swap_check_table ();

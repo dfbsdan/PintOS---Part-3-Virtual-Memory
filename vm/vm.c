@@ -86,10 +86,10 @@ vm_alloc_page_with_initializer (enum vm_type type, void *va, bool writable,
 		new_page->writable = writable;
 		/* Insert the page into the spt. */
 		ASSERT (spt_insert_page (spt, new_page));
-		printf("{7}: Page created with addr: %p\n", new_page); /////////////////////TEMPORAL: TESTING
+		printf("vm_alloc_page_with_initializer: new_page addr: %p\n", new_page); ///TEMPORAL: TESTING
 		return true;
 	}
-	printf("{8}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
+	printf("vm_alloc_page_with_initializer: failure\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
 	return false;
 }
 
@@ -218,7 +218,7 @@ vm_claim_page (void *va) {
 	if (!page) //The page does not exist
 		return false;
 	ASSERT (page->va == va);
-	printf("{9}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
+	printf("vm_claim_page: calling vm_do_claim_page\n"); /////////////////////////TEMPORAL: TESTING
 	return vm_do_claim_page (page);
 }
 
@@ -228,29 +228,25 @@ vm_do_claim_page (struct page *page) {
 	struct frame *frame = vm_get_frame ();
 	uint64_t *pml4 = thread_current ()->pml4;
 
-	printf("{11}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
 	ASSERT (page);
-	printf("{12}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
 	ASSERT (vm_is_page_addr (page->va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
-	printf("{13}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
 	ASSERT (!pml4_get_page (pml4, page->va)); //Must NOT be mapped already ///////Use return instead of assert?
-	printf("{14}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
 
 	/* Set links */
 	frame->page = page;
-	printf("{15}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
 	page->frame = frame;
-	printf("{16}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
 	/* Insert page table entry to map page's VA to frame's PA. */
-	if (pml4_set_page (pml4, page->va, frame->kva, page->writable))
+	if (pml4_set_page (pml4, page->va, frame->kva, page->writable)) {
 		/* Correct way of handling swap_in error?
 		(Assumption so far: The page is already well-mapped so it can be destroyed
 		with no issue by the caller). */
+		printf("vm_do_claim_page: swapping in\n"); /////////////////////////////////TEMPORAL: TESTING
 		return swap_in (page, frame->kva);//////////////////////////////////////////May have issues
+	}
 	palloc_free_page (frame->kva);
 	free (frame);
 	page->frame = NULL;
-	printf("{10}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
+	printf("vm_do_claim_page: failure\n"); ///////////////////////////////////////TEMPORAL: TESTING
 	return false;
 }
 
