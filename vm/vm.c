@@ -187,30 +187,30 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr, bool user,
 	struct page *page = NULL;
 	void *pg_va = pg_round_down (addr);
 
-	printf("vm_try_handle_fault: Faulting page: %p\n", pg_va);///////////////////TEMPORAL
+	//printf("vm_try_handle_fault: Faulting page: %p\n", pg_va);///////////////////TEMPORAL: TESTING
 	if (user) {
-		printf("vm_try_handle_fault: User Fault\n");////////////////////////////////TEMPORAL
+		//printf("vm_try_handle_fault: User Fault\n");////////////////////////////////TEMPORAL: TESTING
 		if (not_present) {
-			printf("vm_try_handle_fault: Not present fault\n");///////////////////////TEMPORAL
+			//printf("vm_try_handle_fault: Not present fault\n");///////////////////////TEMPORAL: TESTING
 			page = spt_find_page (spt, pg_va);
 			if (!page) {
-				printf("vm_try_handle_fault: Unexisting page\n");///////////////////////TEMPORAL
+				printf("vm_try_handle_fault: Unexisting page\n");///////////////////////TEMPORAL: TESTING
 				return false; //Unexisting page
 			}
 			if (write && !page->writable) {
-				printf("vm_try_handle_fault: Write fault\n");///////////////////////////TEMPORAL
+				printf("vm_try_handle_fault: Write fault\n");///////////////////////////TEMPORAL: TESTING
 				return false; //Writing r/o page
 			}
 			return vm_do_claim_page (page);
 		} else { //Write fault
-			printf("vm_try_handle_fault: Write fault\n");/////////////////////////////TEMPORAL
+			//printf("vm_try_handle_fault: Write fault\n");/////////////////////////////TEMPORAL: TESTING
 			ASSERT (write);
 			return false;
 		}
 	} else { //Kernel fault
-		printf("vm_try_handle_fault: Kernel Fault\n");//////////////////////////////TEMPORAL
+		//printf("vm_try_handle_fault: Kernel Fault\n");//////////////////////////////TEMPORAL
 		ASSERT (not_present);
-		printf("vm_try_handle_fault: Not present fault\n");/////////////////////////TEMPORAL
+		//printf("vm_try_handle_fault: Not present fault\n");/////////////////////////TEMPORAL
 		page = spt_find_page (spt, pg_va);
 		ASSERT (page);
 		return vm_do_claim_page (page);
