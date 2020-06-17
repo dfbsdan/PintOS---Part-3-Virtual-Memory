@@ -238,7 +238,9 @@ vm_do_claim_page (struct page *page) {
 
 	/* Set links */
 	frame->page = page;
+	printf("{15}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
 	page->frame = frame;
+	printf("{16}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
 	/* Insert page table entry to map page's VA to frame's PA. */
 	if (pml4_set_page (pml4, page->va, frame->kva, page->writable))
 		/* Correct way of handling swap_in error?

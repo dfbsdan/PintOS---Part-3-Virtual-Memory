@@ -1033,9 +1033,11 @@ setup_stack (struct intr_frame *if_, int argc, char **argv) {
 	/* Map the stack on stack_bottom and claim the page immediately. The page is
 	 * marked as stack automatically by including VM_MARKER_0 here (see
 	 * anon_initializer()). */
+	printf("setup_stack: Setting up stack page\n"); //////////////////////////////TEMPORAL: TESTING
 	if (!(vm_alloc_page (VM_ANON | VM_MARKER_0, stack_bottom, true)
 			&& vm_claim_page (stack_bottom)))
 		return false;
+	printf("setup_stack: Stack page obtained successfully\n"); ///////////////////TEMPORAL: TESTING
 	/* Push all the arguments in decreasing order. */
 	for (i = argc - 1; i >= 0; i--) {
 			esp -= strlen (argv[i]) + 1;
