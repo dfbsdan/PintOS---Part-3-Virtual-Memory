@@ -211,7 +211,6 @@ vm_claim_page (void *va) {
 	if (!page) //The page does not exist
 		return false;
 	ASSERT (page->va == va);
-	printf("{9}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
 	return vm_do_claim_page (page);
 }
 
