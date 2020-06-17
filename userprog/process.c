@@ -1002,6 +1002,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 	ASSERT (pg_ofs (upage) == 0);
 	ASSERT (ofs % PGSIZE == 0);
 
+	printf("load_segment\n");/////////////////////////////////////////////////////TEMPORAL: TESTING
 	while (read_bytes > 0 || zero_bytes > 0) {
 		/* Do calculate how to fill this page.
 		 * We will read PAGE_READ_BYTES bytes from FILE
@@ -1068,6 +1069,7 @@ setup_stack (struct intr_frame *if_, int argc, char **argv) {
 	memset (esp, 0, sizeof (void*));
 	/* Set process' initial stack pointer. */
 	if_->rsp = (uintptr_t)esp;
+	printf("setup_stack: success\n"); ////////////////////////////////////////////TEMPORAL: TESTING
 	return true;
 }
 #endif /* VM */
