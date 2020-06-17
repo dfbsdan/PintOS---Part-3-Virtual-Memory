@@ -86,7 +86,7 @@ vm_alloc_page_with_initializer (enum vm_type type, void *va, bool writable,
 		new_page->writable = writable;
 		/* Insert the page into the spt. */
 		ASSERT (spt_insert_page (spt, new_page));
-		printf("{7}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
+		printf("{7}: Page created with addr: %p\n", new_page); /////////////////////TEMPORAL: TESTING
 		return true;
 	}
 	printf("{8}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
