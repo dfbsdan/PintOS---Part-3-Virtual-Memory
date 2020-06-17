@@ -123,12 +123,53 @@ spt_remove_page (struct supplemental_page_table *spt, struct page *page) {
 	spt_page_destructor (&page->h_elem, spt);
 }
 
+/* Returns an integer in the range [0, 2] which specifies how 'good' a page is
+ * to be evicted, being that each value means:
+ * 		0: The page has been accessed and written.
+ *		1: The page has been accessed but not written.
+ *		2: The page has not been accessed nor written.
+ * The page must be mapped to a kernel virtual addr through a frame. */
+static int
+rank_page (struct page *page, uint64_t *pml4) {
+	ASSERT (pml4);
+	ASSERT (page && page->frame && page->frame->page == page
+			&& pml4_get_page (pml4, page->va) == page->frame->kva);
+
+	if (pml4_is_dirty (pml4, page->va))
+		return 0;
+	else if (pml4_is_accessed (pml4, page->va))
+		return 1;
+	return 2;
+}
+
 /* Get the struct frame, that will be evicted. */
 static struct frame *
 vm_get_victim (void) {
+	struct supplemental_page_table *spt = &thread_current ()->spt;
+	uint64_t *pml4 = thread_current ()->pml4;
+	struct hash_iterator it;
+	struct hash_elem *e;
+	struct page *page;
 	struct frame *victim = NULL;
-	 /* TODO: The policy for eviction is up to you. */
+	int curr_rank, victim_rank = -1;
 
+	hash_first (&it, &spt->table);
+	while ((e = hash_next (&it))) {
+		page = hash_entry (e, struct page, h_elem);
+		ASSERT (vm_is_page_addr (page->va));
+		if (page->frame && pml4_get_page (pml4, page->va)) {
+			/* Mapped page found. */
+			curr_rank = rank_page (page, pml4);
+			if (!victim || curr_rank > victim_rank) {
+				/* Chose as victim if it's the first mapped page found or if the current
+				page has a better 'rank' than the current victim. Return if the highest
+				rank was found. */
+				victim = page->frame;
+				if ((victim_rank = curr_rank) == 2)
+					break;
+			}
+		}
+	}
 	return victim;
 }
 
@@ -136,9 +177,23 @@ vm_get_victim (void) {
  * Return NULL on error.*/
 static struct frame *
 vm_evict_frame (void) {
-	struct frame *victim UNUSED = vm_get_victim ();
-	/* TODO: swap out the victim and return the evicted frame. */
+	struct frame *victim = vm_get_victim ();
+	uint64_t *pml4 = thread_current ()->pml4;
+	struct page *page;
 
+	/* Swap out the victim and return the evicted frame. */
+	if (victim) {
+		page = victim->page;
+		ASSERT (page && page->frame == victim
+				&& victim->kva == pml4_get_page (pml4, page->va));
+		if (swap_out (page)) {
+			/* Remove all links between page and frame. */
+			pml4_clear_page (pml4, page->va);
+			page->frame = NULL;
+			victim->page = NULL;
+			return victim;
+		}
+	}
 	return NULL;
 }
 
