@@ -211,6 +211,7 @@ vm_claim_page (void *va) {
 	if (!page) //The page does not exist
 		return false;
 	ASSERT (page->va == va);
+	printf("{9}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
 	return vm_do_claim_page (page);
 }
 
@@ -220,7 +221,7 @@ vm_do_claim_page (struct page *page) {
 	struct frame *frame = vm_get_frame ();
 	uint64_t *pml4 = thread_current ()->pml4;
 
-	ASSERT (page && page->va);
+	ASSERT (page);
 	ASSERT (vm_is_page_addr (page->va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
 	ASSERT (!pml4_get_page (pml4, page->va)); //Must NOT be mapped already ///////Use return instead of assert?
 
