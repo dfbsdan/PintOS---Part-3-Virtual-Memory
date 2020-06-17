@@ -185,25 +185,36 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr, bool user,
 		bool write, bool not_present) {
 	struct supplemental_page_table *spt = &thread_current ()->spt;
 	struct page *page = NULL;
+	void *pg_va = pg_round_down (addr);
 
-	printf("vm_try_handle_fault: Faulting addr: %p\n", addr);/////////////////////TEMPORAL
-	/* Handle write fault. */
+	printf("vm_try_handle_fault: Faulting page: %p\n", pg_va);///////////////////TEMPORAL
 	if (user) {
 		printf("vm_try_handle_fault: User Fault\n");////////////////////////////////TEMPORAL
-		if (write) {
+		if (not_present) {
+			printf("vm_try_handle_fault: Not present fault\n");///////////////////////TEMPORAL
+			page = spt_find_page (spt, pg_va);
+			if (!page) {
+				printf("vm_try_handle_fault: Unexisting page\n");///////////////////////TEMPORAL
+				return false; //Unexisting page
+			}
+			if (write && !page->writable) {
+				printf("vm_try_handle_fault: Write fault\n");///////////////////////////TEMPORAL
+				return false; //Writing r/o page
+			}
+			return vm_do_claim_page (page);
+		} else { //Write fault
 			printf("vm_try_handle_fault: Write fault\n");/////////////////////////////TEMPORAL
+			ASSERT (write);
 			return false;
 		}
-	} else {
+	} else { //Kernel fault
 		printf("vm_try_handle_fault: Kernel Fault\n");//////////////////////////////TEMPORAL
-		ASSERT (!write);////////////////////////////////////////////////////////////True?
+		ASSERT (not_present);
+		printf("vm_try_handle_fault: Not present fault\n");/////////////////////////TEMPORAL
+		page = spt_find_page (spt, pg_va);
+		ASSERT (page);
+		return vm_do_claim_page (page);
 	}
-	/* Handle not present fault. */
-	ASSERT (not_present);
-	printf("vm_try_handle_fault: Not present fault\n");///////////////////////////TEMPORAL
-	page = spt_find_page (spt, pg_round_down (addr));
-	ASSERT (page);
-	return vm_do_claim_page (page); //////////////////////////////////////////////May not be completely finished
 }
 
 /* Free the page.
