@@ -186,23 +186,24 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr, bool user,
 	struct supplemental_page_table *spt = &thread_current ()->spt;
 	struct page *page = NULL;
 
-	printf("Faulting addr: %p\n", addr);//////////////////////////////////////////TEMPORAL
+	printf("vm_try_handle_fault: Faulting addr: %p\n", addr);/////////////////////TEMPORAL
 	/* Handle write fault. */
 	if (user) {
-		printf("User Fault\n");/////////////////////////////////////////////////////TEMPORAL
+		printf("vm_try_handle_fault: User Fault\n");////////////////////////////////TEMPORAL
 		if (write) {
-			printf("Write fault\n");//////////////////////////////////////////////////TEMPORAL
+			printf("vm_try_handle_fault: Write fault\n");/////////////////////////////TEMPORAL
 			return false;
 		}
 	} else {
-		printf("Kernel Fault\n");///////////////////////////////////////////////////TEMPORAL
+		printf("vm_try_handle_fault: Kernel Fault\n");//////////////////////////////TEMPORAL
 		ASSERT (!write);////////////////////////////////////////////////////////////True?
 	}
 	/* Handle not present fault. */
 	ASSERT (not_present);
-	printf("Not present fault\n");////////////////////////////////////////////////TEMPORAL
+	printf("vm_try_handle_fault: Not present fault\n");///////////////////////////TEMPORAL
 	page = spt_find_page (spt, pg_round_down (addr));
-	return (page)? vm_do_claim_page (page): false;////////////////////////////////May not be completely finished
+	ASSERT (page);
+	return vm_do_claim_page (page); //////////////////////////////////////////////May not be completely finished
 }
 
 /* Free the page.
