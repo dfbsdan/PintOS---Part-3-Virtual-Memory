@@ -201,6 +201,7 @@ anon_destroy (struct page *page) {
 		struct frame *frame = page->frame;
 		ASSERT (frame && frame->page == page);
 		ASSERT (!hash_find (&swap_t.table, &anon_page->swap_elem));
+		pml4_clear_page (thread_current ()->pml4, page->va);
 		palloc_free_page (frame->kva);
 		free (frame);
 	} else { /* The page has been swapped. */
