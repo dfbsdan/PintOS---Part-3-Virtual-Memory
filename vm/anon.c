@@ -6,6 +6,7 @@
 #include "devices/disk.h"
 #include <hash.h>
 #include <bitmap.h>
+#include <stdio.h>//////////////////////////////////////////////////////////////TEMPORAL
 
 /* Number of disk sectors that make up a page. */
 #define SECTORS_PER_PAGE 8
@@ -109,8 +110,12 @@ anon_initializer (struct page *page, enum vm_type type, void *kva) {
 	printf("anon_initializer: page: %p, kva: %p\n", page, kva);///////////////////TEMPORAL: TESTING
 	page->operations = &anon_ops;
 	page->anon.page = page;
-	page->anon.a_type = (type & VM_ANON_STACK)? ANON_STACK:
-			(type & VM_ANON_EXEC)? ANON_EXEC: PANIC ("Unrecognized anon page type");//May need to be updated on addition of more anon types
+	if (type & VM_ANON_STACK)
+		page->anon.a_type = ANON_STACK;
+	else if (type & VM_ANON_EXEC)
+		page->anon.a_type = ANON_EXEC;
+	else//////////////////////////////////////////////////////////////////////////May need to be updated on addition of more anon types
+		PANIC ("Unrecognized anon page type");
 	return true;
 }
 
