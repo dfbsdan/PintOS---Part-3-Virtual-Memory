@@ -221,6 +221,7 @@ vm_do_claim_page (struct page *page) {
 	struct frame *frame = vm_get_frame ();
 	uint64_t *pml4 = thread_current ()->pml4;
 
+	printf("{10}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
 	ASSERT (page);
 	ASSERT (vm_is_page_addr (page->va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
 	ASSERT (!pml4_get_page (pml4, page->va)); //Must NOT be mapped already ///////Use return instead of assert?
@@ -237,7 +238,7 @@ vm_do_claim_page (struct page *page) {
 	palloc_free_page (frame->kva);
 	free (frame);
 	page->frame = NULL;
-	printf("{10}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
+	printf("{11}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
 	return false;
 }
 
