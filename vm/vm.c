@@ -6,6 +6,7 @@
 #include "threads/vaddr.h"
 #include "threads/mmu.h"
 #include <hash.h>
+#include <stdio.h>//////////////////////////////////////////////////////////////TEMPORAL: TESTING
 
 static hash_hash_func spt_hash_func;
 static hash_less_func spt_less_func;
