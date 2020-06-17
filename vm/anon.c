@@ -51,7 +51,7 @@ swap_hash_func (const struct hash_elem *e, void *aux UNUSED) {
 
 	page = hash_entry (e, struct anon_page, swap_elem)->page;
 	ASSERT (VM_TYPE (page->operations->type) == VM_ANON);
-	ASSERT (page->va && vm_is_page_addr (page->va)); /////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (vm_is_page_addr (page->va)); /////////////////////////////Debugging purposes: May be incorrect
 	return hash_bytes (&page, sizeof (page));
 }
 
@@ -120,7 +120,7 @@ anon_swap_in (struct page *page, void *kva) {
 
 	ASSERT (page);
 	ASSERT (VM_TYPE (page->operations->type) == VM_ANON);
-	ASSERT (kva && vm_is_page_addr (kva));////////////////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (vm_is_page_addr (kva));////////////////////////////////////////Debugging purposes: May be incorrect
 	anon_page = &page->anon;
 	ASSERT (anon_page->page == page);
 	swap_check_table ();
@@ -150,7 +150,7 @@ anon_swap_out (struct page *page) {
 	ASSERT (VM_TYPE (page->operations->type) == VM_ANON);
 	ASSERT (page->anon.a_type != STACK); //Do not swap out stack pages
 	kva = page->frame->kva;
-	ASSERT (kva && vm_is_page_addr (kva));////////////////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (vm_is_page_addr (kva));////////////////////////////////////////Debugging purposes: May be incorrect
 	anon_page = &page->anon;
 	ASSERT (anon_page->page == page);
 	swap_check_table ();
@@ -176,7 +176,7 @@ static void
 anon_destroy (struct page *page) {
 	struct anon_page *anon_page;
 
-	ASSERT (page && page->va);
+	ASSERT (page);
 	ASSERT (vm_is_page_addr (page->va));//////////////////////////////////////////Debugging purposes: May be incorrect
 	ASSERT (!spt_find_page (&thread_current ()->spt, page->va));
 	ASSERT (VM_TYPE (page->operations->type) == VM_ANON);

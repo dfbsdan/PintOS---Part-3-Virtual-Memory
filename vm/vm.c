@@ -16,8 +16,7 @@ static void page_copy (struct page *new_page, struct page *old_page);
 /* Checks if a given address corresponds to the one of a page. */
 bool
 vm_is_page_addr (void *va) {
-	ASSERT (va);
-	return pg_round_down (va) == va;
+	return va && pg_round_down (va) == va;
 }
 
 /* Initializes the virtual memory subsystem by invoking each subsystem's
@@ -63,7 +62,7 @@ vm_alloc_page_with_initializer (enum vm_type type, void *va, bool writable,
 	struct page *new_page;
 
 	ASSERT (VM_TYPE (type) != VM_UNINIT);
-	ASSERT (va && vm_is_page_addr (va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (vm_is_page_addr (va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
 
 	/* Check wheter the upage is already occupied or not. */
 	if (!spt_find_page (spt, va)) {
@@ -112,7 +111,7 @@ spt_find_page (struct supplemental_page_table *spt, void *va) {
 bool
 spt_insert_page (struct supplemental_page_table *spt, struct page *page) {
 	ASSERT (spt);
-	ASSERT (page && page->va);
+	ASSERT (page);
 	ASSERT (vm_is_page_addr (page->va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
 	return hash_insert (&spt->table, &page->h_elem) == NULL;
 }
@@ -171,11 +170,13 @@ vm_get_frame (void) {
 /* Growing the stack. */
 static void
 vm_stack_growth (void *addr UNUSED) {
+	ASSERT (0);///////////////////////////////////////////////////////////////////Not implemented
 }
 
 /* Handle the fault on write_protected page */
 static bool
 vm_handle_wp (struct page *page UNUSED) {
+	ASSERT (0);///////////////////////////////////////////////////////////////////Not implemented
 }
 
 /* Return true on success */
@@ -186,7 +187,7 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr UNUSED,
 	struct page *page = NULL;
 	/* TODO: Validate the fault */
 	/* TODO: Your code goes here */
-
+	ASSERT (0);///////////////////////////////////////////////////////////////////Not implemented
 	return vm_do_claim_page (page);
 }
 
@@ -204,7 +205,6 @@ bool
 vm_claim_page (void *va) {
 	struct page *page;
 
-	ASSERT (va);
 	ASSERT (vm_is_page_addr (va)); //////////////////////////////////////////////////Debugging purposes: May be incorrect
 
 	page = spt_find_page (&thread_current ()->spt, va);
