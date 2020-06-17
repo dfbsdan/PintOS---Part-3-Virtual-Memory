@@ -85,8 +85,10 @@ vm_alloc_page_with_initializer (enum vm_type type, void *va, bool writable,
 		new_page->writable = writable;
 		/* Insert the page into the spt. */
 		ASSERT (spt_insert_page (spt, new_page));
+		printf("{7}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
 		return true;
 	}
+	printf("{8}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
 	return false;
 }
 
@@ -207,6 +209,7 @@ vm_claim_page (void *va) {
 	if (!page) //The page does not exist
 		return false;
 	ASSERT (page->va == va);
+	printf("{9}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
 	return vm_do_claim_page (page);
 }
 
@@ -231,6 +234,7 @@ vm_do_claim_page (struct page *page) {
 		return swap_in (page, frame->kva);//////////////////////////////////////////May have issues
 	palloc_free_page (frame->kva);
 	free (frame);
+	printf("{10}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
 	return false;
 }
 
