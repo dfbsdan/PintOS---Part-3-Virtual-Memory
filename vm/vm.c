@@ -302,8 +302,6 @@ spt_less_func (const struct hash_elem *a, const struct hash_elem *b,
 bool
 supplemental_page_table_init (struct supplemental_page_table *spt) {
 	ASSERT (spt);
-
-	spt->table.aux = spt;
 	return hash_init (&spt->table, spt_hash_func, spt_less_func, NULL);
 }
 
@@ -358,6 +356,7 @@ supplemental_page_table_kill (struct supplemental_page_table *spt, bool exit) {
 	ASSERT (spt);
 	/* Destroy all the supplemental_page_table held by thread. */
 	if (spt->table.buckets) { //I.e. make sure there was no error on hash_init()
+		spt->table.aux = spt;
 		if (exit)
 			hash_destroy (&spt->table, spt_page_destructor);
 		else
