@@ -187,6 +187,13 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr UNUSED,
 	struct page *page = NULL;
 	/* TODO: Validate the fault */
 	/* TODO: Your code goes here */
+	if (user)
+		printf("User Fault\n");
+	if (write)
+		printf("Write fault\n");
+	if (not_present)
+		printf("Not present fault\n");
+	printf("Faulting addr: %p\n", addr);
 	ASSERT (0);///////////////////////////////////////////////////////////////////Not implemented
 	return vm_do_claim_page (page);
 }
