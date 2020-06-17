@@ -109,7 +109,8 @@ anon_initializer (struct page *page, enum vm_type type, void *kva) {
 	printf("anon_initializer: page: %p, kva: %p\n", page, kva);///////////////////TEMPORAL: TESTING
 	page->operations = &anon_ops;
 	page->anon.page = page;
-	page->anon.a_type = (type & VM_MARKER_0)? STACK: OTHER;///////////////////////May need to be updated on addition of more anon types
+	page->anon.a_type = (type & VM_ANON_STACK)? ANON_STACK:
+			(type & VM_ANON_EXEC)? ANON_EXEC: PANIC ("Unrecognized anon page type");//May need to be updated on addition of more anon types
 	return true;
 }
 
@@ -149,9 +150,9 @@ anon_swap_out (struct page *page) {
 
 	ASSERT (page && page->frame);
 	ASSERT (VM_TYPE (page->operations->type) == VM_ANON);
-	ASSERT (page->anon.a_type != STACK); //Do not swap out stack pages
+	ASSERT (page->anon.a_type != ANON_STACK); ////////////////////////////////////Do not swap out stack pages??
 	kva = page->frame->kva;
-	ASSERT (vm_is_page_addr (kva));////////////////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (vm_is_page_addr (kva));///////////////////////////////////////////////Debugging purposes: May be incorrect
 	anon_page = &page->anon;
 	ASSERT (anon_page->page == page);
 	swap_check_table ();

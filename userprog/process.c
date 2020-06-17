@@ -972,12 +972,47 @@ install_page (void *upage, void *kpage, bool writable) {
  * If you want to implement the function for only project 2, implement it on the
  * upper block. */
 
+/* Structure used in lazy_load_segment and load_segment in order to fetch the
+ * executable's data. */
+struct load_segment_aux {
+	struct file *file;	/* Source file (executable) for segment loading. */
+	off_t offset;				/* File's offset to read from. */
+	size_t read_bytes;	/* Number of bytes to read from FILE. */
+};
+
 static bool
-lazy_load_segment (struct page *page, void *aux) {
-	/* TODO: Load the segment from the file */
-	/* TODO: This called when the first page fault occurs on address VA. */
-	/* TODO: VA is available when calling this function. */
+lazy_load_segment (struct page *page, void *aux_) {
+	void *kva;
+	struct load_segment_aux *aux;
+	struct file *file;
+	off_t offset;
+	size_t read_bytes;
+
+	/* Load the segment from the file.
+	 * This called when the first page fault occurs on address VA.
+	 * VA is available when calling this function. */
 	printf("lazy_load_segment\n"); ///////////////////////////////////////////////TEMPORAL: TESTING
+	ASSERT (page && page->frame);
+	kva = page->frame->kva;
+	ASSERT (kva);
+	ASSERT (spt_find_page (&thread_current ()->spt, page->va) == page);
+	ASSERT (pml4_get_page (thread_current ()->pml4, page->va) == kva);
+	aux = (struct load_segment_aux*)aux_;
+	ASSERT (aux);
+	file = aux->file;
+	offset = aux->offset;
+	read_bytes = aux->read_bytes;
+	free (aux);
+	ASSERT (file);
+	ASSERT ((offset + read_bytes) <= file_length (file));
+	ASSERT (read_bytes <= PGSIZE);
+
+	/* Read the data and fill the rest of the page with zeroes. */
+	if (file_read_at (file, kva, read_bytes, offset) == read_bytes) {
+		if (read_bytes < PGSIZE)
+			memset (kva + read_bytes, 0, PGSIZE - read_bytes)
+		return true;
+	}
 	return false;
 }
 
@@ -998,6 +1033,8 @@ lazy_load_segment (struct page *page, void *aux) {
 static bool
 load_segment (struct file *file, off_t ofs, uint8_t *upage,
 		uint32_t read_bytes, uint32_t zero_bytes, bool writable) {
+	struct load_segment_aux *aux;
+
 	ASSERT ((read_bytes + zero_bytes) % PGSIZE == 0);
 	ASSERT (pg_ofs (upage) == 0);
 	ASSERT (ofs % PGSIZE == 0);
@@ -1010,9 +1047,13 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 		size_t page_read_bytes = read_bytes < PGSIZE ? read_bytes : PGSIZE;
 		size_t page_zero_bytes = PGSIZE - page_read_bytes;
 
-		/* TODO: Set up aux to pass information to the lazy_load_segment. */
-		void *aux = NULL;
-		if (!vm_alloc_page_with_initializer (VM_ANON, upage,
+		aux = (struct load_segment_aux*)malloc (sizeof (struct load_segment_aux));
+		if (!aux)
+			return false;
+		aux->file = file;
+		aux->offset = ofs;
+		aux->read_bytes = page_read_bytes;
+		if (!vm_alloc_page_with_initializer (VM_ANON | VM_ANON_EXEC, upage,
 					writable, lazy_load_segment, aux))
 			return false;
 
@@ -1020,6 +1061,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 		read_bytes -= page_read_bytes;
 		zero_bytes -= page_zero_bytes;
 		upage += PGSIZE;
+		ofs += page_read_bytes;
 	}
 	return true;
 }
@@ -1032,10 +1074,10 @@ setup_stack (struct intr_frame *if_, int argc, char **argv) {
 	int i;
 
 	/* Map the stack on stack_bottom and claim the page immediately. The page is
-	 * marked as stack automatically by including VM_MARKER_0 here (see
+	 * marked as stack automatically by including VM_ANON_STACK here (see
 	 * anon_initializer()). */
 	printf("setup_stack: Setting up stack page\n"); //////////////////////////////TEMPORAL: TESTING
-	if (!(vm_alloc_page (VM_ANON | VM_MARKER_0, stack_bottom, true)
+	if (!(vm_alloc_page (VM_ANON | VM_ANON_STACK, stack_bottom, true)
 			&& vm_claim_page (stack_bottom)))
 		return false;
 	printf("setup_stack: Stack page obtained successfully\n"); ///////////////////TEMPORAL: TESTING

@@ -5,7 +5,10 @@ struct page;
 enum vm_type;
 
 /* Types of anon_pages. */
-enum anon_type {STACK, OTHER};//////////////////////////////////////////////////More types might be required
+enum anon_type {
+  ANON_STACK,   /* The page belongs to a stack. */
+  ANON_EXEC,    /* The page corresponds to executable code. */
+};
 
 struct anon_page {
   struct page *page;          /* Pointer to the owner page. */
