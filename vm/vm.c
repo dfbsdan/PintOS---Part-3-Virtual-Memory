@@ -15,6 +15,7 @@ static void page_copy (struct page *new_page, struct page *old_page);
 /* Checks if a given address corresponds to the one of a page. */
 bool
 vm_is_page_addr (void *va) {
+	ASSERT (va);
 	return pg_round_down (va) == va;
 }
 
