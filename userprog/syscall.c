@@ -659,6 +659,16 @@ static int mmap(void *addr, size_t length, int writable, int fd, off_t offset){
 					|| (!vm_is_page_addr(addr))){
 		return NULL;
 	}
+	struct supplemental_page_table spt = &thread_current()->spt;
+	size_t pointer;
+	void *uaddr;
+	for (pointer = 0;, pointer<length;, pointer += PGSIZE){
+		uaddr = addr+pointer;
+		if (spt_find_page(spt, uaddr)!=NULL){
+			return NULL;
+		}
+	}
+
 	struct fd_table *fd_t = &thread_current ()->fd_t;
 	struct file_descriptor *file_descriptor;
 	ASSERT (fd_t->table);

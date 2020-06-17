@@ -50,6 +50,22 @@ file_map_destroy (struct page *page) {
 bool *
 do_mmap (void *addr, size_t length, int writable,
 		struct file *file, off_t offset) {
+	struct thread *curr = thread_current();
+	struct mmap_elem *m_elem = (struct mmap_desc*) malloc(sizeof(struct mmap_desc));
+	m_elem->file = file;
+	m_elem->addr = addr;
+	list_init(&m_elem->page_list);
+	size_t pointer;
+	void *uaddr;
+	for (pointer = 0;, pointer<length;, pointer += PGSIZE){
+		uaddr = addr+pointer;
+		vm_alloc_page_with_initializer(type, uaddr, writable, vm_initializer *init UNUSED, void *aux UNUSED);
+		//init, aux for mmaping? aux needs to hold offset+pointer, file, length
+		struct page *page = spt_find_page(&thread_current()->spt, uaddr);
+		list_push_back(&m_elem->page_list, &page->mmap_elem);
+	}
+
+	list_push_front(&curr->mmaped_list, &m_elem->elem);
 }
 
 /* Do the munmap */
