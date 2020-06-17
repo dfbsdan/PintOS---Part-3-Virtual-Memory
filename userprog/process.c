@@ -1004,13 +1004,13 @@ lazy_load_segment (struct page *page, void *aux_) {
 	read_bytes = aux->read_bytes;
 	free (aux);
 	ASSERT (file);
-	ASSERT ((offset + read_bytes) <= file_length (file));
+	ASSERT (((size_t)offset + read_bytes) <= (size_t)file_length (file));
 	ASSERT (read_bytes <= PGSIZE);
 
 	/* Read the data and fill the rest of the page with zeroes. */
 	if (file_read_at (file, kva, read_bytes, offset) == read_bytes) {
 		if (read_bytes < PGSIZE)
-			memset (kva + read_bytes, 0, PGSIZE - read_bytes)
+			memset (kva + read_bytes, 0, PGSIZE - read_bytes);
 		return true;
 	}
 	return false;
