@@ -227,13 +227,14 @@ vm_do_claim_page (struct page *page) {
 	frame->page = page;
 	page->frame = frame;
 	/* Insert page table entry to map page's VA to frame's PA. */
-	if (!pml4_set_page (pml4, page->va, frame->kva, page->writable))
+	if (pml4_set_page (pml4, page->va, frame->kva, page->writable))
 		/* Correct way of handling swap_in error?
 		(Assumption so far: The page is already well-mapped so it can be destroyed
 		with no issue by the caller). */
 		return swap_in (page, frame->kva);//////////////////////////////////////////May have issues
 	palloc_free_page (frame->kva);
 	free (frame);
+	page->frame = NULL;
 	printf("{10}\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
 	return false;
 }
