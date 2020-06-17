@@ -107,17 +107,17 @@ anon_initializer (struct page *page, enum vm_type type, void *kva) {
 	ASSERT (page->frame && page->frame->kva == kva);
 
 	/* Set up the handler */
-	printf("anon_initializer: page: %p, kva: %p\n", page, kva);///////////////////TEMPORAL: TESTING
+	//printf("anon_initializer: page: %p, kva: %p\n", page, kva);///////////////////TEMPORAL: TESTING
 	page->operations = &anon_ops;
 	page->anon.page = page;
 	switch (VM_SUBTYPE (type)) {
 		case VM_ANON_STACK:
 			page->anon.a_type = ANON_STACK;
-			printf("anon_initializer: page type: stack\n", page, kva);////////////////TEMPORAL: TESTING
+			//printf("anon_initializer: page type: stack\n", page, kva);////////////////TEMPORAL: TESTING
 			break;
 		case VM_ANON_EXEC:
 			page->anon.a_type = ANON_EXEC;
-			printf("anon_initializer: page type: executable\n", page, kva);///////////TEMPORAL: TESTING
+			//printf("anon_initializer: page type: executable\n", page, kva);///////////TEMPORAL: TESTING
 			break;
 		default:////////////////////////////////////////////////////////////////////May need to be updated on addition of more anon types
 			PANIC ("Unrecognized anon page type");

@@ -991,7 +991,7 @@ lazy_load_segment (struct page *page, void *aux_) {
 	/* Load the segment from the file.
 	 * This called when the first page fault occurs on address VA.
 	 * VA is available when calling this function. */
-	printf("lazy_load_segment\n"); ///////////////////////////////////////////////TEMPORAL: TESTING
+	//printf("lazy_load_segment\n"); ///////////////////////////////////////////////TEMPORAL: TESTING
 	ASSERT (page && page->frame);
 	kva = page->frame->kva;
 	ASSERT (kva);
@@ -1011,7 +1011,7 @@ lazy_load_segment (struct page *page, void *aux_) {
 	if ((size_t)file_read_at (file, kva, read_bytes, offset) == read_bytes) {
 		if (read_bytes < PGSIZE)
 			memset (kva + read_bytes, 0, PGSIZE - read_bytes);
-		printf("lazy_load_segment: success\n"); ////////////////////////////////////TEMPORAL: TESTING
+		//printf("lazy_load_segment: success\n"); ////////////////////////////////////TEMPORAL: TESTING
 		return true;
 	}
 	printf("lazy_load_segment: failure\n"); //////////////////////////////////////TEMPORAL: TESTING
@@ -1041,7 +1041,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 	ASSERT (pg_ofs (upage) == 0);
 	ASSERT (ofs % PGSIZE == 0);
 
-	printf("load_segment\n");/////////////////////////////////////////////////////TEMPORAL: TESTING
+	//printf("load_segment\n");/////////////////////////////////////////////////////TEMPORAL: TESTING
 	while (read_bytes > 0 || zero_bytes > 0) {
 		/* Do calculate how to fill this page.
 		 * We will read PAGE_READ_BYTES bytes from FILE
@@ -1078,11 +1078,11 @@ setup_stack (struct intr_frame *if_, int argc, char **argv) {
 	/* Map the stack on stack_bottom and claim the page immediately. The page is
 	 * marked as stack automatically by including VM_ANON_STACK here (see
 	 * anon_initializer()). */
-	printf("setup_stack: Setting up stack page\n"); //////////////////////////////TEMPORAL: TESTING
+	//printf("setup_stack: Setting up stack page\n"); //////////////////////////////TEMPORAL: TESTING
 	if (!(vm_alloc_page (VM_ANON | VM_ANON_STACK, stack_bottom, true)
 			&& vm_claim_page (stack_bottom)))
 		return false;
-	printf("setup_stack: Stack page obtained successfully\n"); ///////////////////TEMPORAL: TESTING
+	//printf("setup_stack: Stack page obtained successfully\n"); ///////////////////TEMPORAL: TESTING
 	/* Push all the arguments in decreasing order. */
 	for (i = argc - 1; i >= 0; i--) {
 			esp -= strlen (argv[i]) + 1;
@@ -1113,7 +1113,7 @@ setup_stack (struct intr_frame *if_, int argc, char **argv) {
 	memset (esp, 0, sizeof (void*));
 	/* Set process' initial stack pointer. */
 	if_->rsp = (uintptr_t)esp;
-	printf("setup_stack: success\n"); ////////////////////////////////////////////TEMPORAL: TESTING
+	//printf("setup_stack: success\n"); ////////////////////////////////////////////TEMPORAL: TESTING
 	return true;
 }
 #endif /* VM */

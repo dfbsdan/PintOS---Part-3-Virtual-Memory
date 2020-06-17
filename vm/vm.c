@@ -86,7 +86,7 @@ vm_alloc_page_with_initializer (enum vm_type type, void *va, bool writable,
 		new_page->writable = writable;
 		/* Insert the page into the spt. */
 		ASSERT (spt_insert_page (spt, new_page));
-		printf("vm_alloc_page_with_initializer: new_page addr: %p\n", new_page); ///TEMPORAL: TESTING
+		//printf("vm_alloc_page_with_initializer: new_page addr: %p\n", new_page); ///TEMPORAL: TESTING
 		return true;
 	}
 	printf("vm_alloc_page_with_initializer: failure\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
@@ -237,7 +237,7 @@ vm_claim_page (void *va) {
 	if (!page) //The page does not exist
 		return false;
 	ASSERT (page->va == va);
-	printf("vm_claim_page: calling vm_do_claim_page\n"); /////////////////////////TEMPORAL: TESTING
+	//printf("vm_claim_page: calling vm_do_claim_page\n"); /////////////////////////TEMPORAL: TESTING
 	return vm_do_claim_page (page);
 }
 
@@ -259,7 +259,7 @@ vm_do_claim_page (struct page *page) {
 		/* Correct way of handling swap_in error?
 		(Assumption so far: The page is already well-mapped so it can be destroyed
 		with no issue by the caller). */
-		printf("vm_do_claim_page: swapping in\n"); /////////////////////////////////TEMPORAL: TESTING
+		//printf("vm_do_claim_page: swapping in\n"); /////////////////////////////////TEMPORAL: TESTING
 		return swap_in (page, frame->kva);//////////////////////////////////////////May have issues
 	}
 	palloc_free_page (frame->kva);
