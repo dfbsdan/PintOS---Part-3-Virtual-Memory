@@ -47,7 +47,7 @@ file_map_destroy (struct page *page) {
 }
 
 /* Do the mmap */
-void *
+bool *
 do_mmap (void *addr, size_t length, int writable,
 		struct file *file, off_t offset) {
 }
