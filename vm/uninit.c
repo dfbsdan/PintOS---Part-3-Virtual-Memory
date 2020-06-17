@@ -10,6 +10,7 @@
 
 #include "vm/vm.h"
 #include "vm/uninit.h"
+#include "threads/malloc.h"
 
 static bool uninit_initialize (struct page *page, void *kva);
 static void uninit_destroy (struct page *page);
@@ -65,8 +66,14 @@ uninit_initialize (struct page *page, void *kva) {
  * PAGE will be freed by the caller. */
 static void
 uninit_destroy (struct page *page) {
-	struct uninit_page *uninit UNUSED = &page->uninit;
+	struct uninit_page *uninit;
+
+	ASSERT (page);
 	ASSERT (!spt_find_page (&thread_current ()->spt, page->va));
-	/* TODO: Fill this function.
-	 * TODO: If you don't have anything to do, just return. */
+
+	uninit = &page->uninit;
+	if (VM_TYPE (uninit->type) == VM_ANON
+			&& VM_SUBTYPE (uninit->type) == VM_ANON_EXEC)
+		/* Uninitlialized segment. */
+		free (uninit->aux);
 }

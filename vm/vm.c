@@ -181,21 +181,28 @@ vm_handle_wp (struct page *page UNUSED) {
 
 /* Return true on success */
 bool
-vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr UNUSED,
-		bool user UNUSED, bool write UNUSED, bool not_present UNUSED) {
-	struct supplemental_page_table *spt UNUSED = &thread_current ()->spt;
+vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr, bool user,
+		bool write, bool not_present) {
+	struct supplemental_page_table *spt = &thread_current ()->spt;
 	struct page *page = NULL;
-	/* TODO: Validate the fault */
-	/* TODO: Your code goes here */
-	if (user)
-		printf("User Fault\n");
-	if (write)
-		printf("Write fault\n");
-	if (not_present)
-		printf("Not present fault\n");
-	printf("Faulting addr: %p\n", addr);
-	ASSERT (0);///////////////////////////////////////////////////////////////////Not implemented
-	return vm_do_claim_page (page);
+
+	printf("Faulting addr: %p\n", addr);//////////////////////////////////////////TEMPORAL
+	/* Handle write fault. */
+	if (user) {
+		printf("User Fault\n");/////////////////////////////////////////////////////TEMPORAL
+		if (write) {
+			printf("Write fault\n");//////////////////////////////////////////////////TEMPORAL
+			return false;
+		}
+	} else {
+		printf("Kernel Fault\n");///////////////////////////////////////////////////TEMPORAL
+		ASSERT (!write);////////////////////////////////////////////////////////////True?
+	}
+	/* Handle not present fault. */
+	ASSERT (not_present);
+	printf("Not present fault\n");////////////////////////////////////////////////TEMPORAL
+	page = spt_find_page (spt, pg_round_down (addr));
+	return (page)? vm_do_claim_page (page): false;////////////////////////////////May not be completely finished
 }
 
 /* Free the page.
