@@ -259,12 +259,9 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr, bool user,
 			page = spt_find_page (spt, pg_va);
 			if (!page) {
 				//printf("vm_try_handle_fault: Unexisting page\n");///////////////////////TEMPORAL: TESTING
-				if (addr == f->rsp)
-				/*
-				pg_va = pg_round_up (addr);
-				page = spt_find_page (spt, pg_va);
+				page = spt_find_page (spt, pg_round_up (addr));
 				if (page && page->operations->type == VM_ANON
-						&& page->anon.a_type == ANON_STACK)
+						&& page->anon.a_type == ANON_STACK && pg_va == pg_round_down (f->rsp))
 					/* Stack overflow. */
 					return vm_stack_growth (addr);
 				return false; //Unexisting page
