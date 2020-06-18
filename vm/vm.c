@@ -424,7 +424,6 @@ page_copy (struct page *child_pg, void *parent_pg_) {
 
 	ASSERT (child_pg && child_pg->frame && child_pg->frame->page == child_pg);
 	ASSERT (parent_pg);
-	ASSERT (child_pg->operations == parent_pg->operations);
 	ASSERT (child_pg->va == parent_pg->va);
 	ASSERT (thread_is_user (child_pg->t) && thread_is_user (parent_pg->t));
 	child_kva = child_pg->frame->kva;
@@ -433,6 +432,7 @@ page_copy (struct page *child_pg, void *parent_pg_) {
 	if (pml4_get_page (parent_pg->t->pml4, parent_pg->va)
 			|| vm_claim_page (parent_pg->va, &parent_pg->t->spt)) {
 		/* Both pages are now in the main memory. */
+		ASSERT (child_pg->operations == parent_pg->operations);
 		ASSERT (parent_pg->frame && parent_pg->frame->page == parent_pg);
 		parent_kva = parent_pg->frame->kva;
 		ASSERT (pml4_get_page (parent_pg->t->pml4, parent_pg->va) == parent_kva);
