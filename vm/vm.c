@@ -232,7 +232,6 @@ static bool
 vm_stack_growth (void *addr) {
 	addr = pg_round_down (addr);
 	ASSERT (addr);
-	printf("Growing stack\n");////////////////////////////////////////////////////TEMPORAL: TESTING
 	return vm_alloc_page (VM_ANON | VM_ANON_STACK, addr, true)
 			&& vm_claim_page (addr, &thread_current ()->spt);
 }
