@@ -658,7 +658,7 @@ load (const char *command, struct intr_frame *if_) {
 	/* Open executable file. */
 	file = filesys_open (file_name);
 	if (file == NULL) {
-		//printf ("load: %s: open failed\n", file_name);//////////////////////////////TEMPORAL: TESTING
+		printf ("load: %s: open failed\n", file_name);
 		goto done;
 	}
 	ASSERT (!t->executable);
