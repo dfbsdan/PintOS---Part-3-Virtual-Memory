@@ -250,31 +250,26 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr, bool user,
 	struct page *page = NULL;
 	void *pg_va = pg_round_down (addr);
 
-	//printf("vm_try_handle_fault: Faulting page: %p\n", pg_va);///////////////////TEMPORAL: TESTING
 	if (user) {
-		//printf("vm_try_handle_fault: User Fault\n");////////////////////////////////TEMPORAL: TESTING
 		if (not_present) {
-			//printf("vm_try_handle_fault: Not present fault\n");///////////////////////TEMPORAL: TESTING
 			page = spt_find_page (spt, pg_va);
-			if (!page) {
-				//printf("vm_try_handle_fault: Unexisting page\n");///////////////////////TEMPORAL: TESTING
-				page = spt_find_page (spt, pg_round_up (addr));
-				if (page && page->operations->type == VM_ANON
-						&& page->anon.a_type == ANON_STACK && pg_va == pg_round_down (f->rsp))
-					/* Stack overflow. */
+			if (!page) { //Unexisting page
+				/* Recover if stack overflow. */
+				////////////////////////////////////////////////////////////////////////TESTING
+				pg_va = pg_round_up (addr);
+				if ((addr + 1) == pg_va && (page = spt_find_page (spt, pg_va))
+						&& page->operations->type == VM_ANON
+						&& page->anon.a_type == ANON_STACK)
 					return vm_stack_growth (addr);
-				return false; //Unexisting page
+				///////////////////////////////////////////////////////////////////////////////
+				return false; //Unexisting non-stack page
 			}
 			if (write && !page->writable) {
-				//printf("vm_try_handle_fault: Write fault\n");///////////////////////////TEMPORAL: TESTING
 				return false; //Writing r/o page
 			}
 			return vm_do_claim_page (page);
-		} else { //Write fault
-			//printf("vm_try_handle_fault: Write fault\n");/////////////////////////////TEMPORAL: TESTING
-			//ASSERT (write);
-			return false;
-		}
+		} else
+			return false; //Writing r/o page
 	} else { //Kernel fault
 		//printf("vm_try_handle_fault: Kernel Fault\n");//////////////////////////////TEMPORAL
 		ASSERT (not_present);
