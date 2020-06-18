@@ -345,7 +345,7 @@ process_exec (void *command_) {
 	palloc_free_page (command);
 	if (!success)
 	{
-		printf("process_exec: loading failed\n"); //////////////////////////////////TEMPORAL: TESTING
+		//printf("process_exec: loading failed\n"); //////////////////////////////////TEMPORAL: TESTING
 		return -1;
 	}
 	/* Start switched process. */
@@ -636,7 +636,7 @@ load (const char *command, struct intr_frame *if_) {
 	t->pml4 = pml4_create ();
 	if (t->pml4 == NULL)
 	{
-		printf("load: pml4_create\n"); /////////////////////////////////////////////TEMPORAL: TESTING
+		//printf("load: pml4_create\n"); /////////////////////////////////////////////TEMPORAL: TESTING
 		return false;
 	}
 	process_activate (thread_current ());
@@ -645,20 +645,20 @@ load (const char *command, struct intr_frame *if_) {
 	command_copy = (char*)malloc (strlen (command) + 1);
 	if (command_copy == NULL)
 	{
-		printf("load: command_copy\n"); ////////////////////////////////////////////TEMPORAL: TESTING
+		//printf("load: command_copy\n"); ////////////////////////////////////////////TEMPORAL: TESTING
 		return false;
 	}
   strlcpy (command_copy, command, strlen (command) + 1);
   file_name = strtok_r (command_copy, " ", &save_ptr);
 	if (file_name == NULL)
 	{
-		printf("load: file_name\n"); ///////////////////////////////////////////////TEMPORAL: TESTING
+		//printf("load: file_name\n"); ///////////////////////////////////////////////TEMPORAL: TESTING
 		goto done;
 	}
 	/* Open executable file. */
 	file = filesys_open (file_name);
 	if (file == NULL) {
-		printf ("load: %s: open failed\n", file_name);
+		//printf ("load: %s: open failed\n", file_name);//////////////////////////////TEMPORAL: TESTING
 		goto done;
 	}
 	ASSERT (!t->executable);

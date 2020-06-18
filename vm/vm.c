@@ -251,17 +251,17 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr, bool user,
 			//printf("vm_try_handle_fault: Not present fault\n");///////////////////////TEMPORAL: TESTING
 			page = spt_find_page (spt, pg_va);
 			if (!page) {
-				printf("vm_try_handle_fault: Unexisting page\n");///////////////////////TEMPORAL: TESTING
+				//printf("vm_try_handle_fault: Unexisting page\n");///////////////////////TEMPORAL: TESTING
 				return false; //Unexisting page
 			}
 			if (write && !page->writable) {
-				printf("vm_try_handle_fault: Write fault\n");///////////////////////////TEMPORAL: TESTING
+				//printf("vm_try_handle_fault: Write fault\n");///////////////////////////TEMPORAL: TESTING
 				return false; //Writing r/o page
 			}
 			return vm_do_claim_page (page);
 		} else { //Write fault
-			printf("vm_try_handle_fault: Write fault\n");/////////////////////////////TEMPORAL: TESTING
-			ASSERT (write);
+			//printf("vm_try_handle_fault: Write fault\n");/////////////////////////////TEMPORAL: TESTING
+			//ASSERT (write);
 			return false;
 		}
 	} else { //Kernel fault
