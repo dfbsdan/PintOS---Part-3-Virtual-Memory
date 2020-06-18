@@ -145,7 +145,7 @@ anon_swap_in (struct page *page, void *kva) {
 		for (unsigned i = 0; i < SECTORS_PER_PAGE; i++)
 			disk_read (swap_disk, sector + i, kva + i * DISK_SECTOR_SIZE);
 		/* Allow usage of swap slot. */
-		ASSERT (!hash_delete (&swap_t.table, &anon_page->swap_elem));
+		ASSERT (hash_delete (&swap_t.table, &anon_page->swap_elem));
 		bitmap_set (swap_t.bitmap, anon_page->idx, false);
 		return true;
 	}
