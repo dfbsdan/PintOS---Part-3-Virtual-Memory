@@ -228,9 +228,11 @@ vm_get_frame (void) {
 }
 
 /* Growing the stack. */
-static void
-vm_stack_growth (void *addr UNUSED) {
-	ASSERT (0);///////////////////////////////////////////////////////////////////Not implemented
+static bool
+vm_stack_growth (void *addr) {
+	ASSERT (vm_is_page_addr (addr));
+	return vm_alloc_page (VM_ANON | VM_ANON_STACK, addr, true)
+			&& vm_claim_page (addr, &thread_current ()->spt)))
 }
 
 /* Handle the fault on write_protected page */
@@ -255,6 +257,12 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr, bool user,
 			page = spt_find_page (spt, pg_va);
 			if (!page) {
 				//printf("vm_try_handle_fault: Unexisting page\n");///////////////////////TEMPORAL: TESTING
+				pg_va = pg_round_up (addr);
+				page = spt_find_page (spt, pg_va);
+				if (page && page->operations->type == VM_ANON
+						&& page->anon.a_type == ANON_STACK)
+					/* Stack overflow. */
+					return vm_stack_growth (addr);
 				return false; //Unexisting page
 			}
 			if (write && !page->writable) {
