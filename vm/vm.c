@@ -232,7 +232,7 @@ static bool
 vm_stack_growth (void *addr) {
 	ASSERT (vm_is_page_addr (addr));
 	return vm_alloc_page (VM_ANON | VM_ANON_STACK, addr, true)
-			&& vm_claim_page (addr, &thread_current ()->spt)))
+			&& vm_claim_page (addr, &thread_current ()->spt);
 }
 
 /* Handle the fault on write_protected page */
