@@ -1080,7 +1080,7 @@ setup_stack (struct intr_frame *if_, int argc, char **argv) {
 	 * anon_initializer()). */
 	//printf("setup_stack: Setting up stack page\n"); //////////////////////////////TEMPORAL: TESTING
 	if (!(vm_alloc_page (VM_ANON | VM_ANON_STACK, stack_bottom, true)
-			&& vm_claim_page (stack_bottom)))
+			&& vm_claim_page (stack_bottom, &thread_current ()->spt)))
 		return false;
 	//printf("setup_stack: Stack page obtained successfully\n"); ///////////////////TEMPORAL: TESTING
 	/* Push all the arguments in decreasing order. */

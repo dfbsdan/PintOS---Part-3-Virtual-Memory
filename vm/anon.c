@@ -190,18 +190,19 @@ anon_destroy (struct page *page) {
 
 	ASSERT (page);
 	ASSERT (vm_is_page_addr (page->va));//////////////////////////////////////////Debugging purposes: May be incorrect
-	ASSERT (!spt_find_page (&thread_current ()->spt, page->va));
+	ASSERT (thread_is_user (page->t));
+	ASSERT (!spt_find_page (&page->t->spt, page->va));
 	ASSERT (VM_TYPE (page->operations->type) == VM_ANON);
 	anon_page = &page->anon;
 	ASSERT (anon_page->page == page);
 	swap_check_table ();
 
-	if (pml4_get_page (thread_current ()->pml4, page->va)) {
+	if (pml4_get_page (page->t->pml4, page->va)) {
 		/* The page is in the main memory. */
 		struct frame *frame = page->frame;
 		ASSERT (frame && frame->page == page);
 		ASSERT (!hash_find (&swap_t.table, &anon_page->swap_elem));
-		pml4_clear_page (thread_current ()->pml4, page->va);
+		pml4_clear_page (page->t->pml4, page->va);
 		palloc_free_page (frame->kva);
 		free (frame);
 	} else { /* The page has been swapped. */

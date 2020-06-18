@@ -69,7 +69,8 @@ uninit_destroy (struct page *page) {
 	struct uninit_page *uninit;
 
 	ASSERT (page);
-	ASSERT (!spt_find_page (&thread_current ()->spt, page->va));
+	ASSERT (thread_is_user (page->t));
+	ASSERT (!spt_find_page (&page->t->spt, page->va));
 
 	uninit = &page->uninit;
 	if (VM_TYPE (uninit->type) == VM_ANON

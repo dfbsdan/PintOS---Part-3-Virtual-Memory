@@ -11,7 +11,7 @@
 static hash_hash_func spt_hash_func;
 static hash_less_func spt_less_func;
 static hash_action_func spt_page_destructor;
-static void page_copy (struct page *new_page, struct page *old_page);
+static vm_initializer page_copy;
 
 /* Checks if a given address corresponds to the one of a page. */
 bool
@@ -84,6 +84,7 @@ vm_alloc_page_with_initializer (enum vm_type type, void *va, bool writable,
 		}
 		uninit_new (new_page, va, init, type, aux, init_pointer);
 		new_page->writable = writable;
+		new_page->t = thread_current ();
 		/* Insert the page into the spt. */
 		ASSERT (spt_insert_page (spt, new_page));
 		//printf("vm_alloc_page_with_initializer: new_page addr: %p\n", new_page); ///TEMPORAL: TESTING
@@ -258,7 +259,7 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr, bool user,
 			}
 			return vm_do_claim_page (page);
 		} else { //Write fault
-			//printf("vm_try_handle_fault: Write fault\n");/////////////////////////////TEMPORAL: TESTING
+			printf("vm_try_handle_fault: Write fault\n");/////////////////////////////TEMPORAL: TESTING
 			ASSERT (write);
 			return false;
 		}
@@ -283,12 +284,13 @@ vm_dealloc_page (struct page *page) {
 
 /* Claim the page that allocate on VA. */
 bool
-vm_claim_page (void *va) {
+vm_claim_page (void *va, struct supplemental_page_table *spt) {
 	struct page *page;
 
 	ASSERT (vm_is_page_addr (va)); //////////////////////////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (spt);
 
-	page = spt_find_page (&thread_current ()->spt, va);
+	page = spt_find_page (spt, va);
 	if (!page) //The page does not exist
 		return false;
 	ASSERT (page->va == va);
@@ -300,10 +302,12 @@ vm_claim_page (void *va) {
 static bool
 vm_do_claim_page (struct page *page) {
 	struct frame *frame = vm_get_frame ();
-	uint64_t *pml4 = thread_current ()->pml4;
+	uint64_t *pml4;
 
 	ASSERT (page);
+	ASSERT (thread_is_user (page->t));
 	ASSERT (vm_is_page_addr (page->va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
+	pml4 = page->t->pml4
 	ASSERT (!pml4_get_page (pml4, page->va)); //Must NOT be mapped already ///////Use return instead of assert?
 
 	/* Set links */
@@ -366,40 +370,73 @@ supplemental_page_table_copy (struct supplemental_page_table *dst,
 		struct supplemental_page_table *src) {
 	struct hash_iterator it;
 	struct hash_elem *elem;
-	struct page *page, *new_page, *new_pages = NULL;
-	size_t page_cnt;
+	struct page *parent_pg;
+	enum vm_type type;
 
 	ASSERT (dst && src);
 
-	/* Allocate required space for all pages. */
-	page_cnt = src->table.elem_cnt;
-	if (page_cnt == 0)
-		return true;
-	new_pages = (struct page*)calloc (page_cnt, sizeof (struct page));
-	if (!new_pages)
-		return false;
 	/* Copy all pages. */
 	hash_first (&it, &src->table);
-	for (size_t i = 0; i < page_cnt; i++) {
-		elem = hash_next (&it);
-		ASSERT (elem);
-		page = hash_entry (elem, struct page, h_elem);
-		new_page = &new_pages[i];
-		page_copy (new_page, page);
-		ASSERT (hash_insert (&dst->table, &new_page->h_elem) == NULL);
+	while ((elem = hash_next (&it))) {
+		parent_pg = hash_entry (elem, struct page, h_elem);
+		/* Get page type to be passed to initializer. */
+		switch (parent_pg->operations->type) {
+			case M_UNINIT:
+				type = parent_pg->uninit.type;
+				break;
+			case VM_ANON:
+				switch (parent_pg->anon.a_type) {
+					case ANON_STACK:
+						type = VM_ANON | VM_ANON_STACK;
+						break;
+					case ANON_EXEC:
+						type = VM_ANON | VM_ANON_EXEC;
+						break;
+					default:
+						ASSERT (0);
+				}
+				break;
+			case VM_FILE:
+				type = VM_FILE;/////////////////////////////////////////////////////////May require more cases
+				break;
+			default:
+				ASSERT (0);
+		}
+		/* Initialize and copy page. */
+		if (!(vm_alloc_page_with_initializer (type, parent_pg->va, parent_pg->writable,
+				page_copy, parent_pg) && vm_claim_page (parent_pg->va, dst)))
+			return false;
 	}
-	ASSERT (hash_next (&it) == NULL);
+	ASSERT (hash_size (child_t) == hash_size (parent_t));
 	return true;
 }
 
-/* Copies the information and data of the OLD_PAGE into the NEW_PAGE. */
-static void
-page_copy (struct page *new_page, struct page *old_page) {
-	ASSERT (new_page && old_page);
+/* Copies the information and data of the PARENT_PG page into the CHILD_PG page,
+ * which must be mapped in its thread's pml4. */
+static bool
+page_copy (struct page *child_pg, void *parent_pg_) {
+	struct page *parent_pg = (struct page *)parent_pg_;
+	void *child_kva, *parent_kva;
 
-	new_page->operations = old_page->operations;
-	new_page->va = old_page->va;
-	ASSERT (0); //////////////////////////////////////////////////////////////////Not finished (copy-on-write?)
+	ASSERT (child_pg && child_pg->frame && child_pg->frame->page == child_pg);
+	ASSERT (parent_pg);
+	ASSERT (child_pg->operations == parent_pg->operations);
+	ASSERT (child_pg->va == parent_pg->va);
+	ASSERT (thread_is_user (child_pg->t) && thread_is_user (parent_pg->t));
+	child_kva = child_pg->frame->kva;
+	ASSERT (pml4_get_page (child_pg->t->pml4, child_pg->va) == child_kva);
+
+	if (pml4_get_page (parent_pg->t->pml4, parent_pg->va)
+			|| vm_claim_page (parent_pg->va, &parent_pg->t->spt)) {
+		/* Both pages are now in the main memory. */
+		ASSERT (parent_pg->frame && parent_pg->frame->page == parent_pg);
+		parent_kva = parent_pg->frame->kva;
+		ASSERT (pml4_get_page (parent_pg->t->pml4, parent_pg->va) == parent_kva);
+		ASSERT (child_kva != parent_kva);
+		memcpy (child_kva, parent_kva, PGSIZE);
+		return true;
+	}
+	return false;
 }
 
 /* Free the resource held by the supplemental page table.
