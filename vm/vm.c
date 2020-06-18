@@ -232,6 +232,7 @@ static bool
 vm_stack_growth (void *addr) {
 	addr = pg_round_down (addr);
 	ASSERT (addr);
+	printf("Growing stack\n");////////////////////////////////////////////////////TEMPORAL: TESTING
 	return vm_alloc_page (VM_ANON | VM_ANON_STACK, addr, true)
 			&& vm_claim_page (addr, &thread_current ()->spt);
 }
@@ -258,6 +259,8 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr, bool user,
 			page = spt_find_page (spt, pg_va);
 			if (!page) {
 				//printf("vm_try_handle_fault: Unexisting page\n");///////////////////////TEMPORAL: TESTING
+				if (addr == f->rsp)
+				/*
 				pg_va = pg_round_up (addr);
 				page = spt_find_page (spt, pg_va);
 				if (page && page->operations->type == VM_ANON
