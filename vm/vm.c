@@ -101,8 +101,9 @@ spt_find_page (struct supplemental_page_table *spt, void *va) {
 	struct page temp;
 	struct hash_elem *elem;
 
+	va = pg_round_down (va);
 	ASSERT (spt);
-	ASSERT (vm_is_page_addr (va)); //////////////////////////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (va);
 
 	temp.va = va;
 	elem = hash_find (&spt->table, &temp.h_elem);

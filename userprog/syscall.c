@@ -725,5 +725,5 @@ put_user (uint8_t *udst, uint8_t byte) {
 static bool
 valid_user_addr (const uint8_t *addr) {
 	struct thread *curr = thread_current ();
-	return (is_user_vaddr(addr) && pml4_get_page (curr->pml4, addr));
+	return (is_user_vaddr(addr) && spt_find_page (&curr->spt, addr));
 }
