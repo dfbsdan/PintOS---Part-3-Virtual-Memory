@@ -91,7 +91,6 @@ vm_alloc_page_with_initializer (enum vm_type type, void *va, bool writable,
 		//printf("vm_alloc_page_with_initializer: new_page addr: %p\n", new_page); ///TEMPORAL: TESTING
 		return true;
 	}
-	printf("vm_alloc_page_with_initializer: failure\n"); /////////////////////////////////////////////////////////////TEMPORAL: TESTING
 	return false;
 }
 

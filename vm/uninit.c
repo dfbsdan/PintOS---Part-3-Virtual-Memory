@@ -67,14 +67,33 @@ uninit_initialize (struct page *page, void *kva) {
 static void
 uninit_destroy (struct page *page) {
 	struct uninit_page *uninit;
+	struct file_page *m_elem;
 
 	ASSERT (page);
 	ASSERT (thread_is_user (page->t));
 	ASSERT (!spt_find_page (&page->t->spt, page->va));
 
 	uninit = &page->uninit;
-	if (VM_TYPE (uninit->type) == VM_ANON
-			&& VM_SUBTYPE (uninit->type) == VM_ANON_EXEC)
-		/* Uninitlialized segment. */
-		free (uninit->aux);
+	switch (VM_TYPE (uninit->type)) {
+		case VM_ANON:
+			switch (VM_SUBTYPE (uninit->type)) {
+				case VM_ANON_EXEC:
+					/* Uninitlialized segment. */
+					free (uninit->aux);
+					break;
+				case VM_ANON_STACK:
+					break;
+				default:
+					ASSERT (0);
+			}
+			break;
+		case VM_FILE:
+			/* Uninitlialized file page. */
+			m_elem = (struct file_page *)uninit->aux;
+			file_close (m_elem->file);
+			free (m_elem);
+			break;
+		default:
+			ASSERT (0);
+	}
 }
