@@ -6,6 +6,7 @@
 #include "threads/vaddr.h"
 #include "threads/mmu.h"
 #include <hash.h>
+#include <string.h>
 #include <stdio.h>//////////////////////////////////////////////////////////////TEMPORAL: TESTING
 
 static hash_hash_func spt_hash_func;
@@ -307,7 +308,7 @@ vm_do_claim_page (struct page *page) {
 	ASSERT (page);
 	ASSERT (thread_is_user (page->t));
 	ASSERT (vm_is_page_addr (page->va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
-	pml4 = page->t->pml4
+	pml4 = page->t->pml4;
 	ASSERT (!pml4_get_page (pml4, page->va)); //Must NOT be mapped already ///////Use return instead of assert?
 
 	/* Set links */
@@ -381,7 +382,7 @@ supplemental_page_table_copy (struct supplemental_page_table *dst,
 		parent_pg = hash_entry (elem, struct page, h_elem);
 		/* Get page type to be passed to initializer. */
 		switch (parent_pg->operations->type) {
-			case M_UNINIT:
+			case VM_UNINIT:
 				type = parent_pg->uninit.type;
 				break;
 			case VM_ANON:
@@ -407,7 +408,7 @@ supplemental_page_table_copy (struct supplemental_page_table *dst,
 				page_copy, parent_pg) && vm_claim_page (parent_pg->va, dst)))
 			return false;
 	}
-	ASSERT (hash_size (child_t) == hash_size (parent_t));
+	ASSERT (hash_size (&dst->table) == hash_size (&src->table));
 	return true;
 }
 
