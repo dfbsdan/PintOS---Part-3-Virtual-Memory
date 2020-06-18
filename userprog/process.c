@@ -992,11 +992,11 @@ lazy_load_segment (struct page *page, void *aux_) {
 	 * This called when the first page fault occurs on address VA.
 	 * VA is available when calling this function. */
 	//printf("lazy_load_segment\n"); ///////////////////////////////////////////////TEMPORAL: TESTING
-	ASSERT (page && page->frame);
+	ASSERT (page && page->frame && thread_is_user (page->t));
 	kva = page->frame->kva;
 	ASSERT (kva);
-	ASSERT (spt_find_page (&thread_current ()->spt, page->va) == page);
-	ASSERT (pml4_get_page (thread_current ()->pml4, page->va) == kva);
+	ASSERT (spt_find_page (&page->t->spt, page->va) == page);
+	ASSERT (pml4_get_page (page->t->pml4, page->va) == kva);
 	aux = (struct load_segment_aux*)aux_;
 	ASSERT (aux);
 	file = aux->file;
