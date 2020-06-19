@@ -668,6 +668,7 @@ syscall_mmap (void *addr, size_t length, int writable, int fd, off_t offset) {
 			|| fd < 0 || fd > MAX_FD)
 		return NULL;
 
+
 	file_descriptor = &fd_t->table[fd];
 	if (file_descriptor->fd_t == FDT_STDIN || file_descriptor->fd_t == FDT_STDOUT)
 		return NULL;
@@ -677,7 +678,7 @@ syscall_mmap (void *addr, size_t length, int writable, int fd, off_t offset) {
 				return NULL;
 			ASSERT (file_descriptor->fd_t == FDT_OTHER
 					&& file_descriptor->dup_fds);
-			if (file_length (file_descriptor->fd_file) <= 0)
+			if (file_length (file_descriptor->fd_file) <= 0 && offset <= file_length (file_descriptor->fd_file))
 				return NULL;
 			newfile = file_reopen (file_descriptor->fd_file);
 			if (!newfile)
