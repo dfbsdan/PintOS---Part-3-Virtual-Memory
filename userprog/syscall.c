@@ -676,11 +676,13 @@ syscall_mmap (void *addr, size_t length, int writable, int fd, off_t offset) {
 				return NULL;
 			ASSERT (file_descriptor->fd_t == FDT_OTHER
 					&& file_descriptor->dup_fds);
-			if (file_length (file_descriptor->fd_file) < 0)
+			if (file_length (file_descriptor->fd_file) <= 0)
 				return NULL;
 			newfile = file_reopen (file_descriptor->fd_file);
 			if (!newfile)
 				return NULL;
+			if (offset < 0)
+				offset = file_length (newfile) + offset;
 			return do_mmap (addr, length, writable, newfile, offset);
 		case FD_CLOSE:
 			ASSERT (file_descriptor->fd_t == FDT_OTHER
