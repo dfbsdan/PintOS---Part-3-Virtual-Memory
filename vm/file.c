@@ -177,13 +177,17 @@ file_map_destroy (struct page *page) {
 	ASSERT (((size_t)offset + length) <= (size_t)file_length (file));/////////////May not be correct
 	/* Writeback all the modified contents to the storage, if on main memory. */
 	if (pml4_get_page (page->t->pml4, page->va)) {
+		ASSERT (page->frame);
+		kva = page->frame->kva;
+		ASSERT (vm_is_page_addr (kva)
+				&& pml4_get_page (page->t->pml4, page->va) == kva);
 		ASSERT (!hash_find (&um_table, &file_page->um_elem));
 		ASSERT ((size_t)file_write_at (file, kva, length, offset) == length);
 		pml4_clear_page (page->t->pml4, page->va);
 		palloc_free_page (frame->kva);
 		free (frame);
 	} else
-		ASSERT (hash_delete (&um_table, &file_page->um_elem));	
+		ASSERT (hash_delete (&um_table, &file_page->um_elem));
 	file_close (file_page->file);
 }
 
