@@ -58,7 +58,7 @@ swap_hash_func (const struct hash_elem *e, void *aux UNUSED) {
 
 /* Default function for comparison between two hash elements A and B that belong
  * to a swap_table entry (page).
- * Returns TRUE if A belongs to a page whose va value is less than B's. */
+ * Returns TRUE if A belongs to a page whose address value is less than B's. */
 static bool
 swap_less_func (const struct hash_elem *a, const struct hash_elem *b,
 		void *aux UNUSED) {
@@ -107,17 +107,14 @@ anon_initializer (struct page *page, enum vm_type type, void *kva) {
 	ASSERT (page->frame && page->frame->kva == kva);
 
 	/* Set up the handler */
-	//printf("anon_initializer: page: %p, kva: %p\n", page, kva);///////////////////TEMPORAL: TESTING
 	page->operations = &anon_ops;
 	page->anon.page = page;
 	switch (VM_SUBTYPE (type)) {
 		case VM_ANON_STACK:
 			page->anon.a_type = ANON_STACK;
-			//printf("anon_initializer: page type: stack\n", page, kva);////////////////TEMPORAL: TESTING
 			break;
 		case VM_ANON_EXEC:
 			page->anon.a_type = ANON_EXEC;
-			//printf("anon_initializer: page type: executable\n", page, kva);///////////TEMPORAL: TESTING
 			break;
 		default:////////////////////////////////////////////////////////////////////May need to be updated on addition of more anon types
 			PANIC ("Unrecognized anon page type");
@@ -136,20 +133,21 @@ anon_swap_in (struct page *page, void *kva) {
 	ASSERT (vm_is_page_addr (kva));///////////////////////////////////////////////Debugging purposes: May be incorrect
 	anon_page = &page->anon;
 	ASSERT (anon_page->page == page);
+	ASSERT (thread_is_user (page->t)
+			&& spt_find_page (&page->t->spt, page->va) == page
+			&& pml4_get_page (page->t->pml4, page->va) == kva);
+	ASSERT (hash_find (&swap_t.table, &anon_page->swap_elem));
+	ASSERT (bitmap_test (swap_t.bitmap, anon_page->idx));
 	swap_check_table ();
-
-	if (hash_find (&swap_t.table, &anon_page->swap_elem)) {
-		ASSERT (bitmap_test (swap_t.bitmap, anon_page->idx));
-		/* Read from disk. */
-		sector = index_to_sector (anon_page->idx);
-		for (unsigned i = 0; i < SECTORS_PER_PAGE; i++)
-			disk_read (swap_disk, sector + i, kva + i * DISK_SECTOR_SIZE);
-		/* Allow usage of swap slot. */
-		ASSERT (hash_delete (&swap_t.table, &anon_page->swap_elem));
-		bitmap_set (swap_t.bitmap, anon_page->idx, false);
-		return true;
-	}
-	return false;
+	
+	/* Read from disk. */
+	sector = index_to_sector (anon_page->idx);
+	for (unsigned i = 0; i < SECTORS_PER_PAGE; i++)
+		disk_read (swap_disk, sector + i, kva + i * DISK_SECTOR_SIZE);
+	/* Allow usage of swap slot. */
+	ASSERT (hash_delete (&swap_t.table, &anon_page->swap_elem));
+	bitmap_set (swap_t.bitmap, anon_page->idx, false);
+	return true;
 }
 
 /* Swap out the page by writing contents to the swap disk. */
@@ -165,6 +163,9 @@ anon_swap_out (struct page *page) {
 	ASSERT (vm_is_page_addr (kva));///////////////////////////////////////////////Debugging purposes: May be incorrect
 	anon_page = &page->anon;
 	ASSERT (anon_page->page == page);
+	ASSERT (thread_is_user (page->t)
+			&& spt_find_page (&page->t->spt, page->va) == page
+			&& pml4_get_page (page->t->pml4, page->va) == kva);
 	swap_check_table ();
 
 	if (!hash_find (&swap_t.table, &anon_page->swap_elem)) {

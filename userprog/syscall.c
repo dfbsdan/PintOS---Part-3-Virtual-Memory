@@ -698,7 +698,14 @@ syscall_mmap (void *addr, size_t length, int writable, int fd, off_t offset) {
  * has not yet been unmapped. */
 static void
 syscall_munmap (void *addr) {
+	struct page *page;
 
+	if (!vm_is_page_addr (addr))
+		return;
+	page = spt_find_page (&thread_current ()->spt, addr);
+	if (!page || VM_TYPE (page->operations->type) != VM_FILE)
+		return;
+	do_munmap (addr);
 }
 
 

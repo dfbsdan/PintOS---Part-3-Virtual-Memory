@@ -10,6 +10,7 @@ struct file_page {
 	struct file *file;
 	off_t offset;
 	size_t length;
+	struct hash_elem um_elem;
 };
 
 void vm_file_init (void);
