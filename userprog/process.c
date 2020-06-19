@@ -444,8 +444,9 @@ process_exit (int status) {
 	struct terminated_child_st *child_st;
 	struct list_elem *child_elem;
 	struct file_descriptor *fd;
+	enum intr_level old_level;
 
-	ASSERT (intr_get_level () == INTR_OFF);
+	old_level = intr_disable ();
 
 	curr->exit_status = status;
 	if (thread_is_user (curr)) {
@@ -513,6 +514,7 @@ process_exit (int status) {
 			child->parent = NULL;
 		}
 	}
+	intr_set_level (old_level);
 	process_cleanup (true);
 }
 

@@ -369,12 +369,12 @@ void
 thread_exit (int status) {
 	ASSERT (!intr_context ());
 
-	intr_disable ();
 #ifdef USERPROG
 	process_exit (status);
 #endif
 	/* Just set our status to dying and schedule another process.
 	   We will be destroyed during the call to schedule_tail(). */
+	intr_disable ();
 	list_remove (&thread_current ()->all_elem);
 	do_schedule (THREAD_DYING);
 	NOT_REACHED ();
