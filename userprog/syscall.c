@@ -48,8 +48,6 @@ static void syscall_seek (int fd, unsigned position);
 static unsigned syscall_tell (int fd);
 static void syscall_close (int fd);
 static int syscall_dup2 (int oldfd, int newfd);
-static int mmap(void *addr, size_t length, int writable, int fd, off_t offset);
-static void munmap (void *addr);
 static int create_file_descriptor (struct file *file);
 static void check_mem_space_read (const void *addr_, const size_t size, const bool is_str);
 static void check_mem_space_write (const void *addr_, const size_t size);
@@ -122,12 +120,8 @@ syscall_handler (struct intr_frame *f) {
 			f->R.rax = (uint64_t)syscall_dup2 ((int)f->R.rdi, (int)f->R.rsi);
 			break;
 		/* Project 3 and optionally project 4. */
-		case SYS_MMAP:			/* Map a file into memory. */
-			f->R.rax = (uint64_t) mmap(f->R.rdi, (size_t)f->R.rsi, (int)f->R.rdx, (int)f->R.r10 , (off_t)f->R.r8 );
-			break;
-		case SYS_MUNMAP:		/* Remove a memory mapping. */
-			munmap(f->R.rdi);
-			break;
+		//case SYS_MMAP:			/* Map a file into memory. */
+		//case SYS_MUNMAP:		/* Remove a memory mapping. */
 
 		/* Project 4 only. */
 		//case SYS_CHDIR:			/* Change the current directory. */
@@ -643,60 +637,6 @@ syscall_dup2 (int oldfd, int newfd) {
 	}
 	ASSERT (0); /* Should not be reached. */
 }
-
-/*
-Maps length bytes the file open as fd starting from offset byte into the process's virtual address space at addr.
-The entire file is mapped into consecutive virtual pages starting at addr.
-If the length of the file is not a multiple of PGSIZE, then some bytes in the final mapped page "stick out" beyond the end of the file.
-Set these bytes to zero when the page is faulted in, and discard them when the page is written back to disk.
-If successful, this function returns the virtual address where the file is mapped.
-On failure, it must return NULL which is not a valid address to map a file.
-*/
-
-static int mmap(void *addr, size_t length, int writable, int fd, off_t offset){
-	//check fail conditions
-	if ((addr == NULL) || (*addr == 0) || (length == 0)
-					|| (!vm_is_page_addr(addr))){
-		return NULL;
-	}
-	struct fd_table *fd_t = &thread_current ()->fd_t;
-	struct file_descriptor *file_descriptor;
-	ASSERT (fd_t->table);
-	ASSERT (fd_t->size <= MAX_FD + 1);
-	if (fd < 0 || fd > MAX_FD)
-		return NULL;
-	file_descriptor = &fd_t->table[fd];
-	if (file_descriptor->fd_t == FDT_STDIN
-			|| file_descriptor->fd_t == FDT_STDOUT)
-				return NULL;
-	switch (file_descriptor->fd_st) {
-		case FD_OPEN:
-			if (file_descriptor->fd_file == NULL)
-				return NULL;
-			ASSERT (file_descriptor->fd_t == FDT_OTHER
-					&& file_descriptor->dup_fds);
-			if ((int)file_length (file_descriptor->fd_file) < 0)
-				return NULL;
-
-		case FD_CLOSE:
-			ASSERT (file_descriptor->fd_t == FDT_OTHER
-					&& file_descriptor->fd_file == NULL
-					&& file_descriptor->dup_fds == NULL);
-			return NULL;
-		default:
-			ASSERT (0);
-	struct file *newfile = file_reopen(file_descriptor->file);
-	if (do_mmap (addr, length, writable, newfile, offset)){
-		return addr;
-	}
-	return NULL;
-}
-
-
-static void munmap (void *addr){
-
-}
-
 
 /* Given the address ADDR of a memory space of size SIZE bytes, this
  * function checks if a memory violation occurs when trying to read from it.
