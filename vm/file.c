@@ -2,6 +2,9 @@
 
 #include "vm/vm.h"
 #include "filesys/file.h"
+#include "threads/malloc.h"
+#include "threads/mmu.c"
+#include "threads/vaddr.h"
 
 static vm_initializer mmap_init;
 static hash_hash_func m_hash_func;
@@ -78,6 +81,7 @@ file_map_initializer (struct page *page, enum vm_type type, void *kva) {
 	/* Set up the handler */
 	page->operations = &file_ops;
 	file_page = &page->file;
+	file_page->page = page;
 	file_page->file = aux->file;
 	file_page->offset = aux->offset;
 	file_page->length = aux->length;

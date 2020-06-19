@@ -123,7 +123,7 @@ syscall_handler (struct intr_frame *f) {
 			break;
 		/* Project 3 and optionally project 4. */
 		case SYS_MMAP:			/* Map a file into memory. */
-			f->R.rax = (void*)syscall_mmap ((void*)f->R.rdi, (size_t)f->R.rsi, (int)f->R.rdx, (int)f->R.r10 , (off_t)f->R.r8 );
+			f->R.rax = (uint64_t)syscall_mmap ((void*)f->R.rdi, (size_t)f->R.rsi, (int)f->R.rdx, (int)f->R.r10 , (off_t)f->R.r8 );
 			break;
 		case SYS_MUNMAP:		/* Remove a memory mapping. */
 			syscall_munmap ((void*)f->R.rdi);
@@ -794,7 +794,8 @@ put_user (uint8_t *udst, uint8_t byte) {
 	 kernel page. Returns TRUE if these two conditions are true, FALSE
 	 otherwise. */
 static bool
-valid_user_addr (const uint8_t *addr) {
+valid_user_addr (const uint8_t *addr_) {
+	void *addr = addr_;
 	struct thread *curr = thread_current ();
 	return (is_user_vaddr(addr) && spt_find_page (&curr->spt, addr));
 }
