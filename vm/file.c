@@ -185,7 +185,7 @@ file_map_destroy (struct page *page) {
 		ASSERT ((size_t)file_write_at (file, kva, length, offset) == length);
 		pml4_clear_page (page->t->pml4, page->va);
 		palloc_free_page (kva);
-		free (frame);
+		free (page->frame);
 	} else
 		ASSERT (hash_delete (&um_table, &file_page->um_elem));
 	file_close (file_page->file);
@@ -203,9 +203,10 @@ do_mmap (void *addr, size_t length, int writable, struct file *file,
 
 	page_cnt = (length % PGSIZE)? 1 + length / PGSIZE: length / PGSIZE;
 	for (size_t i = 0; i < page_cnt; i++) {
-		if (i != 0)
+		if (i != 0) {
 			/* Make sure that FILE is not destroyed until all pages are removed. */
 			ASSERT (file_dup2 (file));
+		}
 		/* Set up aux data and page. */
 		m_elem = (struct file_page*)malloc (sizeof (struct file_page));
 		if (m_elem) {
