@@ -1,6 +1,6 @@
 #ifndef VM_FILE_H
 #define VM_FILE_H
-#include "threads/threads.h"
+#include "threads/thread.h"
 #include "vm/vm.h"
 
 struct page;
