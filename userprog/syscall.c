@@ -681,6 +681,7 @@ syscall_mmap (void *addr, size_t length, int writable, int fd, off_t offset) {
 			if (file_length (file_descriptor->fd_file) <= 0)
 				return NULL;
 			newfile = file_reopen (file_descriptor->fd_file);
+			assert newfile;
 			if (!newfile)
 				return NULL;
 			return do_mmap (addr, length, writable, newfile, offset);
