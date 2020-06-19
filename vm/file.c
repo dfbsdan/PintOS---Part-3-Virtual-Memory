@@ -6,7 +6,6 @@
 #include "threads/mmu.c"
 #include "threads/vaddr.h"
 
-static vm_initializer mmap_init;
 static hash_hash_func m_hash_func;
 static hash_less_func m_less_func;
 static bool file_map_swap_in (struct page *page, void *kva);
@@ -164,7 +163,7 @@ file_map_destroy (struct page *page) {
 	size_t length;
 	void *kva;
 
-	ASSERT (page && vm_is_page_addr (page->va);
+	ASSERT (page && vm_is_page_addr (page->va));
 	ASSERT (VM_TYPE (page->operations->type) == VM_FILE);
 	ASSERT (thread_is_user (page->t) &&
 			!spt_find_page (&thread_current ()->spt, page->va));
@@ -178,13 +177,13 @@ file_map_destroy (struct page *page) {
 	ASSERT (((size_t)offset + length) <= (size_t)file_length (file));/////////////May not be correct
 	/* Writeback all the modified contents to the storage, if on main memory. */
 	if (pml4_get_page (page->t->pml4, page->va)) {
+		ASSERT (!hash_find (&um_table, &file_page->um_elem));
 		ASSERT ((size_t)file_write_at (file, kva, length, offset) == length);
-		ASSERT (hash_delete (&um_table, &file_page->um_elem));
 		pml4_clear_page (page->t->pml4, page->va);
 		palloc_free_page (frame->kva);
 		free (frame);
-	}
-	ASSERT (!hash_find (&um_table, &file_page->um_elem));
+	} else
+		ASSERT (hash_delete (&um_table, &file_page->um_elem));	
 	file_close (file_page->file);
 }
 
@@ -230,7 +229,6 @@ do_munmap (void *addr) {
 	struct supplemental_page_table *spt = &thread_current ()->spt;
 
 	ASSERT (vm_is_page_addr (addr));
-	ASSERT (page);
 
 	spt_remove_page (spt, spt_find_page (spt, addr));
 }
