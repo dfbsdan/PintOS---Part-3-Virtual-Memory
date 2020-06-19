@@ -202,7 +202,6 @@ do_mmap (void *addr, size_t length, int writable, struct file *file,
 
 	ASSERT (vm_is_page_addr (addr) && length && file);
 	ASSERT (file_length (file) > 0);
-	ASSERT (offset >= 0);
 
 	page_cnt = (length % PGSIZE)? 1 + length / PGSIZE: length / PGSIZE;
 	if (((size_t)offset + length) > (size_t)file_length (file))
