@@ -4,6 +4,8 @@
 #include "filesys/file.h"
 #include "threads/malloc.h"
 #include "threads/vaddr.h"
+#include "threads/mmu.h"
+#include <string.h>
 #include <hash.h>
 
 static hash_hash_func m_hash_func;
