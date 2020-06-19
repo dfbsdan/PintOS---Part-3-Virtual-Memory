@@ -184,7 +184,7 @@ file_map_destroy (struct page *page) {
 		ASSERT (!hash_find (&um_table, &file_page->um_elem));
 		ASSERT ((size_t)file_write_at (file, kva, length, offset) == length);
 		pml4_clear_page (page->t->pml4, page->va);
-		palloc_free_page (frame->kva);
+		palloc_free_page (kva);
 		free (frame);
 	} else
 		ASSERT (hash_delete (&um_table, &file_page->um_elem));
