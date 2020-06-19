@@ -3,6 +3,7 @@
 #include "vm/vm.h"
 #include "filesys/file.h"
 #include "threads/malloc.h"
+#include "threads/vaddr.h"
 #include <hash.h>
 
 static hash_hash_func m_hash_func;
