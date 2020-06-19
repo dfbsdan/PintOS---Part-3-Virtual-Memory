@@ -664,7 +664,7 @@ syscall_mmap (void *addr, size_t length, int writable, int fd, off_t offset) {
 	ASSERT (fd_t->size <= MAX_FD + 1);
 
 	//check fail conditions
-	if (length == 0 || !vm_is_page_addr(addr) || !is_user_vaddr (addr) || !vm_is_page_addr(offset)
+	if (length == 0 || !vm_is_page_addr(addr) || !is_user_vaddr (addr) || pg_ofs(offset) != 0
 			|| fd < 0 || fd > MAX_FD)
 		return NULL;
 
