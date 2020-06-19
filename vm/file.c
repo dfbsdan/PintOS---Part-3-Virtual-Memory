@@ -111,7 +111,7 @@ file_map_swap_in (struct page *page, void *kva) {
 	offset = file_page->offset;
 	length = file_page->length;
 	ASSERT (file);
-	ASSERT (length > 0 && length <= PGSIZE);
+	ASSERT (length <= PGSIZE);
 	ASSERT (((size_t)offset + length) <= (size_t)file_length (file));/////////////May not be correct
 
 	/* Read the data and fill the rest of the page with zeroes. */
@@ -174,7 +174,7 @@ file_map_destroy (struct page *page) {
 	offset = file_page->offset;
 	length = file_page->length;
 	ASSERT (file);
-	ASSERT (length > 0 && length <= PGSIZE);
+	ASSERT (length <= PGSIZE);
 	ASSERT (((size_t)offset + length) <= (size_t)file_length (file));/////////////May not be correct
 	/* Writeback all the modified contents to the storage, if on main memory. */
 	if (pml4_get_page (page->t->pml4, page->va)) {
