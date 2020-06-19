@@ -1,10 +1,10 @@
 /* file.c: Implementation of memory mapped file object (mmaped object). */
 
-#include "vm/vm.h"
+#include "threads/thread.h"
 #include "filesys/file.h"
 #include "threads/malloc.h"
 #include "threads/mmu.c"
-#include "threads/vaddr.h"
+#include <hash.h>
 
 static hash_hash_func m_hash_func;
 static hash_less_func m_less_func;
@@ -103,9 +103,8 @@ file_map_swap_in (struct page *page, void *kva) {
 	ASSERT (thread_is_user (page->t)
 			&& spt_find_page (&page->t->spt, page->va) == page
 			&& pml4_get_page (page->t->pml4, page->va) == kva);
-	ASSERT (hash_find (&um_table, &file_page->um_elem));
-
 	file_page = &page->file;
+	ASSERT (hash_find (&um_table, &file_page->um_elem));
 	file = file_page->file;
 	offset = file_page->offset;
 	length = file_page->length;
@@ -138,9 +137,9 @@ file_map_swap_out (struct page *page) {
 	ASSERT (thread_is_user (page->t)
 			&& spt_find_page (&page->t->spt, page->va) == page
 			&& pml4_get_page (page->t->pml4, page->va) == kva);
+			file_page = &page->file;
 	ASSERT (!hash_find (&um_table, &file_page->um_elem));
 
-	file_page = &page->file;
 	file = file_page->file;
 	offset = file_page->offset;
 	length = file_page->length;
