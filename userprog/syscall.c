@@ -48,6 +48,8 @@ static void syscall_seek (int fd, unsigned position);
 static unsigned syscall_tell (int fd);
 static void syscall_close (int fd);
 static int syscall_dup2 (int oldfd, int newfd);
+static void *syscall_mmap(void *addr, size_t length, int writable, int fd, off_t offset);
+static void syscall_munmap (void *addr);
 static int create_file_descriptor (struct file *file);
 static void check_mem_space_read (const void *addr_, const size_t size, const bool is_str);
 static void check_mem_space_write (const void *addr_, const size_t size);
@@ -120,8 +122,12 @@ syscall_handler (struct intr_frame *f) {
 			f->R.rax = (uint64_t)syscall_dup2 ((int)f->R.rdi, (int)f->R.rsi);
 			break;
 		/* Project 3 and optionally project 4. */
-		//case SYS_MMAP:			/* Map a file into memory. */
-		//case SYS_MUNMAP:		/* Remove a memory mapping. */
+		case SYS_MMAP:			/* Map a file into memory. */
+			f->R.rax = (uint64_t)syscall_mmap ((void*)f->R.rdi, (size_t)f->R.rsi, (int)f->R.rdx, (int)f->R.r10 , (off_t)f->R.r8 );
+			break;
+		case SYS_MUNMAP:		/* Remove a memory mapping. */
+			syscall_munmap ((void*)f->R.rdi);
+			break;
 
 		/* Project 4 only. */
 		//case SYS_CHDIR:			/* Change the current directory. */
@@ -638,6 +644,72 @@ syscall_dup2 (int oldfd, int newfd) {
 	ASSERT (0); /* Should not be reached. */
 }
 
+/* Maps length bytes the file open as fd starting from offset byte into the
+ * process's virtual address space at addr.
+ * The entire file is mapped into consecutive virtual pages starting at addr.
+ * If the length of the file is not a multiple of PGSIZE, then some bytes in the
+ * final mapped page "stick out" beyond the end of the file.
+ * Set these bytes to zero when the page is faulted in, and discard them when
+ * the page is written back to disk.
+ * If successful, this function returns the virtual address where the file is
+ * mapped. On failure, it must return NULL which is not a valid address to map
+ * a file. */
+static void *
+syscall_mmap (void *addr, size_t length, int writable, int fd, off_t offset) {
+	struct fd_table *fd_t = &thread_current ()->fd_t;
+	struct file_descriptor *file_descriptor;
+	struct file *newfile;
+
+	ASSERT (fd_t->table);
+	ASSERT (fd_t->size <= MAX_FD + 1);
+
+	//check fail conditions
+	if (length == 0 || !vm_is_page_addr(addr) || !is_user_vaddr (addr)
+			|| fd < 0 || fd > MAX_FD)
+		return NULL;
+
+	file_descriptor = &fd_t->table[fd];
+	if (file_descriptor->fd_t == FDT_STDIN || file_descriptor->fd_t == FDT_STDOUT)
+		return NULL;
+	switch (file_descriptor->fd_st) {
+		case FD_OPEN:
+			if (file_descriptor->fd_file == NULL)
+				return NULL;
+			ASSERT (file_descriptor->fd_t == FDT_OTHER
+					&& file_descriptor->dup_fds);
+			if (file_length (file_descriptor->fd_file) <= 0)
+				return NULL;
+			newfile = file_reopen (file_descriptor->fd_file);
+			if (!newfile)
+				return NULL;
+			return do_mmap (addr, length, writable, newfile, offset);
+		case FD_CLOSE:
+			ASSERT (file_descriptor->fd_t == FDT_OTHER
+					&& file_descriptor->fd_file == NULL
+					&& file_descriptor->dup_fds == NULL);
+			return NULL;
+		default:
+			ASSERT (0);
+	}
+	ASSERT (0); /* Should not be reached. */
+}
+
+/* Unmaps the mapping for the specified address range addr, which must be the
+ * virtual address returned by a previous call to mmap by the same process that
+ * has not yet been unmapped. */
+static void
+syscall_munmap (void *addr) {
+	struct page *page;
+
+	if (!vm_is_page_addr (addr))
+		return;
+	page = spt_find_page (&thread_current ()->spt, addr);
+	if (!page || VM_TYPE (page->operations->type) != VM_FILE)
+		return;
+	do_munmap (addr);
+}
+
+
 /* Given the address ADDR of a memory space of size SIZE bytes, this
  * function checks if a memory violation occurs when trying to read from it.
  * If ADDR points to a string, the IS_STR variable must be set to true
@@ -723,7 +795,8 @@ put_user (uint8_t *udst, uint8_t byte) {
 	 kernel page. Returns TRUE if these two conditions are true, FALSE
 	 otherwise. */
 static bool
-valid_user_addr (const uint8_t *addr) {
+valid_user_addr (const uint8_t *addr_) {
+	void *addr = (void*)addr_;
 	struct thread *curr = thread_current ();
-	return (is_user_vaddr(addr) && pml4_get_page (curr->pml4, addr));
+	return (is_user_vaddr(addr) && spt_find_page (&curr->spt, addr));
 }

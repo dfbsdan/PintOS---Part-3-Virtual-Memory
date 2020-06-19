@@ -26,7 +26,7 @@
 
 static struct terminated_child_st *terminated_child (tid_t child_tid);
 static bool active_child (tid_t child_tid);
-static void process_cleanup (void);
+static void process_cleanup (bool exit);
 static bool load (const char *command, struct intr_frame *if_);
 static void initd (void *command);
 static void __do_fork (void *);
@@ -336,7 +336,7 @@ process_exec (void *command_) {
 	_if.eflags = FLAG_IF | FLAG_MBS;
 
 	/* We first kill the current context */
-	process_cleanup ();
+	process_cleanup (false);
 
 	/* And then load the binary */
 	success = load (command, &_if);
@@ -345,7 +345,7 @@ process_exec (void *command_) {
 	palloc_free_page (command);
 	if (!success)
 	{
-		printf("{5}\n"); ////////////////////////////////////////////////////////////TEMPORAL: TESTING
+		//printf("process_exec: loading failed\n"); //////////////////////////////////TEMPORAL: TESTING
 		return -1;
 	}
 	/* Start switched process. */
@@ -444,8 +444,9 @@ process_exit (int status) {
 	struct terminated_child_st *child_st;
 	struct list_elem *child_elem;
 	struct file_descriptor *fd;
+	enum intr_level old_level;
 
-	ASSERT (intr_get_level () == INTR_OFF);
+	old_level = intr_disable ();
 
 	curr->exit_status = status;
 	if (thread_is_user (curr)) {
@@ -513,16 +514,20 @@ process_exit (int status) {
 			child->parent = NULL;
 		}
 	}
-	process_cleanup ();
+	intr_set_level (old_level);
+	process_cleanup (true);
 }
 
-/* Free the current process's resources. */
+/* Free the current process's resources. The EXIT argument defines if the
+ * cleanup process is done in order to finish a process completely (i.e.
+ * process_exit ()), or in order to change its execution context (i.e.
+ * process_exec ()). */
 static void
-process_cleanup (void) {
+process_cleanup (bool exit) {
 	struct thread *curr = thread_current ();
 
 #ifdef VM
-	supplemental_page_table_kill (&curr->spt);
+	supplemental_page_table_kill (&curr->spt, exit);
 #endif
 
 	uint64_t *pml4;
@@ -633,7 +638,7 @@ load (const char *command, struct intr_frame *if_) {
 	t->pml4 = pml4_create ();
 	if (t->pml4 == NULL)
 	{
-		printf("{0}\n"); ////////////////////////////////////////////////////////////TEMPORAL: TESTING
+		//printf("load: pml4_create\n"); /////////////////////////////////////////////TEMPORAL: TESTING
 		return false;
 	}
 	process_activate (thread_current ());
@@ -642,14 +647,14 @@ load (const char *command, struct intr_frame *if_) {
 	command_copy = (char*)malloc (strlen (command) + 1);
 	if (command_copy == NULL)
 	{
-		printf("{1}\n"); ////////////////////////////////////////////////////////////TEMPORAL: TESTING
+		//printf("load: command_copy\n"); ////////////////////////////////////////////TEMPORAL: TESTING
 		return false;
 	}
   strlcpy (command_copy, command, strlen (command) + 1);
   file_name = strtok_r (command_copy, " ", &save_ptr);
 	if (file_name == NULL)
 	{
-		printf("{2}\n"); ////////////////////////////////////////////////////////////TEMPORAL: TESTING
+		//printf("load: file_name\n"); ///////////////////////////////////////////////TEMPORAL: TESTING
 		goto done;
 	}
 	/* Open executable file. */
@@ -720,7 +725,7 @@ load (const char *command, struct intr_frame *if_) {
 					if (!load_segment (file, file_page, (void *) mem_page,
 								read_bytes, zero_bytes, writable))
 					{
-						printf("{3}\n"); ////////////////////////////////////////////////////TEMPORAL: TESTING
+						printf("load: load_segment\n"); ////////////////////////////////////TEMPORAL: TESTING
 						goto done;
 					}
 				}
@@ -735,7 +740,7 @@ load (const char *command, struct intr_frame *if_) {
   argv = parse_command (argc, file_name, save_ptr);
 	if (!setup_stack (if_, argc, argv))
 	{
-		printf("{4}\n"); ////////////////////////////////////////////////////////////TEMPORAL: TESTING
+		printf("load: setup_stack\n"); /////////////////////////////////////////////TEMPORAL: TESTING
 		goto done;
 	}
 	/* Start address. */
@@ -969,11 +974,50 @@ install_page (void *upage, void *kpage, bool writable) {
  * If you want to implement the function for only project 2, implement it on the
  * upper block. */
 
+/* Structure used in lazy_load_segment and load_segment in order to fetch the
+ * executable's data. */
+struct load_segment_aux {
+	struct file *file;	/* Source file (executable) for segment loading. */
+	off_t offset;				/* File's offset to read from. */
+	size_t read_bytes;	/* Number of bytes to read from FILE. */
+};
+
 static bool
-lazy_load_segment (struct page *page, void *aux) {
-	/* TODO: Load the segment from the file */
-	/* TODO: This called when the first page fault occurs on address VA. */
-	/* TODO: VA is available when calling this function. */
+lazy_load_segment (struct page *page, void *aux_) {
+	void *kva;
+	struct load_segment_aux *aux;
+	struct file *file;
+	off_t offset;
+	size_t read_bytes;
+
+	/* Load the segment from the file.
+	 * This called when the first page fault occurs on address VA.
+	 * VA is available when calling this function. */
+	//printf("lazy_load_segment\n"); ///////////////////////////////////////////////TEMPORAL: TESTING
+	ASSERT (page && page->frame && thread_is_user (page->t));
+	kva = page->frame->kva;
+	ASSERT (kva);
+	ASSERT (spt_find_page (&page->t->spt, page->va) == page);
+	ASSERT (pml4_get_page (page->t->pml4, page->va) == kva);
+	aux = (struct load_segment_aux*)aux_;
+	ASSERT (aux);
+	file = aux->file;
+	offset = aux->offset;
+	read_bytes = aux->read_bytes;
+	free (aux);
+	ASSERT (file);
+	ASSERT (((size_t)offset + read_bytes) <= (size_t)file_length (file));
+	ASSERT (read_bytes <= PGSIZE);
+
+	/* Read the data and fill the rest of the page with zeroes. */
+	if ((size_t)file_read_at (file, kva, read_bytes, offset) == read_bytes) {
+		if (read_bytes < PGSIZE)
+			memset (kva + read_bytes, 0, PGSIZE - read_bytes);
+		//printf("lazy_load_segment: success\n"); ////////////////////////////////////TEMPORAL: TESTING
+		return true;
+	}
+	printf("lazy_load_segment: failure\n"); //////////////////////////////////////TEMPORAL: TESTING
+	return false;
 }
 
 /* Loads a segment starting at offset OFS in FILE at address
@@ -993,10 +1037,13 @@ lazy_load_segment (struct page *page, void *aux) {
 static bool
 load_segment (struct file *file, off_t ofs, uint8_t *upage,
 		uint32_t read_bytes, uint32_t zero_bytes, bool writable) {
+	struct load_segment_aux *aux;
+
 	ASSERT ((read_bytes + zero_bytes) % PGSIZE == 0);
 	ASSERT (pg_ofs (upage) == 0);
 	ASSERT (ofs % PGSIZE == 0);
 
+	//printf("load_segment\n");/////////////////////////////////////////////////////TEMPORAL: TESTING
 	while (read_bytes > 0 || zero_bytes > 0) {
 		/* Do calculate how to fill this page.
 		 * We will read PAGE_READ_BYTES bytes from FILE
@@ -1004,9 +1051,13 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 		size_t page_read_bytes = read_bytes < PGSIZE ? read_bytes : PGSIZE;
 		size_t page_zero_bytes = PGSIZE - page_read_bytes;
 
-		/* TODO: Set up aux to pass information to the lazy_load_segment. */
-		void *aux = NULL;
-		if (!vm_alloc_page_with_initializer (VM_ANON, upage,
+		aux = (struct load_segment_aux*)malloc (sizeof (struct load_segment_aux));
+		if (!aux)
+			return false;
+		aux->file = file;
+		aux->offset = ofs;
+		aux->read_bytes = page_read_bytes;
+		if (!vm_alloc_page_with_initializer (VM_ANON | VM_ANON_EXEC, upage,
 					writable, lazy_load_segment, aux))
 			return false;
 
@@ -1014,6 +1065,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 		read_bytes -= page_read_bytes;
 		zero_bytes -= page_zero_bytes;
 		upage += PGSIZE;
+		ofs += page_read_bytes;
 	}
 	return true;
 }
@@ -1021,16 +1073,49 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 /* Create a PAGE of stack at the USER_STACK. Return true on success. */
 static bool
 setup_stack (struct intr_frame *if_, int argc, char **argv) {
-	bool success = false;
 	void *stack_bottom = (void *) (((uint8_t *) USER_STACK) - PGSIZE);
+	uint8_t *esp = (uint8_t*)USER_STACK;
+	int i;
 
-	ASSERT (0);/////////////////////////////////////////////////////////////////////////////////////////REACHED UNTIL PROJ 3
-
-	/* TODO: Map the stack on stack_bottom and claim the page immediately.
-	 * TODO: If success, set the rsp accordingly.
-	 * TODO: You should mark the page is stack. */
-	/* TODO: Your code goes here */
-
-	return success;
+	/* Map the stack on stack_bottom and claim the page immediately. The page is
+	 * marked as stack automatically by including VM_ANON_STACK here (see
+	 * anon_initializer()). */
+	//printf("setup_stack: Setting up stack page\n"); //////////////////////////////TEMPORAL: TESTING
+	if (!(vm_alloc_page (VM_ANON | VM_ANON_STACK, stack_bottom, true)
+			&& vm_claim_page (stack_bottom, &thread_current ()->spt)))
+		return false;
+	//printf("setup_stack: Stack page obtained successfully\n"); ///////////////////TEMPORAL: TESTING
+	/* Push all the arguments in decreasing order. */
+	for (i = argc - 1; i >= 0; i--) {
+			esp -= strlen (argv[i]) + 1;
+			memcpy (esp, argv[i], strlen (argv[i]) + 1);
+			argv[i] = (char*)esp;
+	}
+	/* Align the arguments with the 64-bit system. */
+	i = 0;
+	while(((uint64_t)esp % 8) != 0) {
+			esp--;
+			i++;
+	}
+	ASSERT (i < 8);
+	memset (esp, 0, i);
+	/* Push NULL pointer (end of argv). */
+	esp -= sizeof (char*);
+	memset (esp, 0, sizeof (char*));
+	/* Push the address of each argument. */
+	for (i = argc - 1; i >= 0; i--) {
+			esp -= sizeof (char*);
+			memcpy (esp, &argv[i], sizeof (char*));
+	}
+	/* Set argument registers. */
+	if_->R.rdi = (uint64_t)argc;
+	if_->R.rsi = (uint64_t)esp;
+	/* Leave a space for the return address. */
+	esp -= sizeof (void*);
+	memset (esp, 0, sizeof (void*));
+	/* Set process' initial stack pointer. */
+	if_->rsp = (uintptr_t)esp;
+	//printf("setup_stack: success\n"); ////////////////////////////////////////////TEMPORAL: TESTING
+	return true;
 }
 #endif /* VM */
