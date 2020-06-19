@@ -197,12 +197,14 @@ void *
 do_mmap (void *addr, size_t length, int writable, struct file *file,
 		off_t offset) {
 	struct file_page *m_elem;
-	size_t page_cnt;
+	size_t page_cnt, read_bytes;
 	void *uaddr = addr;
 
 	ASSERT (vm_is_page_addr (addr) && length && file);
 
 	page_cnt = (length % PGSIZE)? 1 + length / PGSIZE: length / PGSIZE;
+	if (((size_t)offset + length) > (size_t)file_length (file))
+		length = (size_t)(file_length (file) - offset);
 	for (size_t i = 0; i < page_cnt; i++) {
 		if (i != 0) {
 			/* Make sure that FILE is not destroyed until all pages are removed. */
@@ -216,7 +218,7 @@ do_mmap (void *addr, size_t length, int writable, struct file *file,
 			m_elem->length = (length > PGSIZE)? PGSIZE: length;
 			if (vm_alloc_page_with_initializer (VM_FILE, uaddr, writable, NULL, m_elem)) {
 				uaddr += PGSIZE;
-				offset += m_elem->length;
+				offset += PGSIZE;
 				length -= m_elem->length;
 				continue;
 			}
