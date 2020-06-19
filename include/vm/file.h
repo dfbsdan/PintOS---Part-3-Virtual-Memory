@@ -9,13 +9,6 @@ enum vm_type;
 struct file_page {
 };
 
-struct mmap_elem {
-	struct file* file;
-	struct list_elem elem;
-	struct list page_list;
-	void *addr;
-}
-
 void vm_file_init (void);
 bool file_map_initializer (struct page *page, enum vm_type type, void *kva);
 bool *do_mmap(void *addr, size_t length, int writable,

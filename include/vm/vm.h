@@ -43,7 +43,6 @@ struct page {
 	void *va;              /* Address in terms of user space */
 	struct frame *frame;   /* Back reference for frame. */
 	struct hash_elem h_elem; /* Element in the supplemental page table. */
-	struct list_elem mmap_elem; /*element for mmaped files*/
 	/* Per-type data are binded into the union.
 	 * Each function automatically detects the current union */
 	union {

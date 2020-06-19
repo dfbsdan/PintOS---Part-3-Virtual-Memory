@@ -660,9 +660,6 @@ init_thread (struct thread *t, const char *name, int priority,
 	sema_init (&t->fork_sema, 0);
 	t->exit_status = 0;
 #endif
-#ifdef VM
-	list_init(&t->mmaped_list);
-#endif
 	list_push_back (&all_list, &t->all_elem);
 	return true;
 }
