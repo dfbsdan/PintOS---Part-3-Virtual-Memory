@@ -2,7 +2,6 @@
 
 #include "threads/thread.h"
 #include "filesys/file.h"
-#include "threads/malloc.h"
 #include "threads/mmu.c"
 #include <hash.h>
 
