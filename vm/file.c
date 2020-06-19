@@ -2,7 +2,7 @@
 
 #include "threads/thread.h"
 #include "filesys/file.h"
-#include "threads/mmu.c"
+#include "threads/malloc.h"
 #include <hash.h>
 
 static hash_hash_func m_hash_func;
