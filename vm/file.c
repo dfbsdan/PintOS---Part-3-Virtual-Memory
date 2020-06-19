@@ -1,7 +1,6 @@
 /* file.c: Implementation of memory mapped file object (mmaped object). */
 
-#include "threads/thread.h"
-#include "filesys/file.h"
+#include "vm/file.h"
 #include "threads/malloc.h"
 #include <hash.h>
 
