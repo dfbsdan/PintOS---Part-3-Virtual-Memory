@@ -1,8 +1,7 @@
 #ifndef VM_FILE_H
 #define VM_FILE_H
 #include "vm/vm.h"
-#include "threads/thread.h"
-#include "filesys/file.h"
+#include "filesys/off_t.h"
 
 struct page;
 enum vm_type;
