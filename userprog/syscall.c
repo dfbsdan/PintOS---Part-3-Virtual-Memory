@@ -55,7 +55,7 @@ static void check_mem_space_read (const void *addr_, const size_t size, const bo
 static void check_mem_space_write (const void *addr_, const size_t size);
 static int64_t get_user(const uint8_t *uaddr);
 static bool put_user(uint8_t *udst, uint8_t byte);
-static bool valid_user_addr (const uint8_t *addr);
+static bool valid_user_addr (const uint8_t *addr, bool write);
 
 void
 syscall_init (void) {
