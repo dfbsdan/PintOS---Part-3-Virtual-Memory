@@ -805,6 +805,7 @@ valid_user_addr (const uint8_t *addr_, bool write) {
 	if (page && is_user_vaddr(addr)) {
 		if (!write)
 			return true;
+		return page->writable;
 		switch (page->operations->type) {
 			case VM_UNINIT:
 				type = page->uninit.type;
