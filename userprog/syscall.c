@@ -801,7 +801,7 @@ valid_user_addr (const uint8_t *addr_) {
 	struct thread *curr = thread_current ();
 	struct page *page = spt_find_page (&curr->spt, addr);
 	enum vm_type type;
-
+	ASSERT(0);
 	if (page && is_user_vaddr(addr)) {
 		switch (page->operations->type) {
 			case VM_UNINIT:
