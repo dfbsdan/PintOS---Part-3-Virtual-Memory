@@ -799,5 +799,33 @@ static bool
 valid_user_addr (const uint8_t *addr_) {
 	void *addr = (void*)addr_;
 	struct thread *curr = thread_current ();
-	return (is_user_vaddr(addr) && spt_find_page (&curr->spt, addr));
+	struct page *page = spt_find_page (&curr->spt, addr);
+	enum vm_type type;
+
+	if (page && is_user_vaddr(addr)) {
+		switch (page->operations->type) {
+			case VM_UNINIT:
+				type = page->uninit.type;
+				break;
+			case VM_ANON:
+				switch (page->anon.a_type) {
+					case ANON_STACK:
+						type = VM_ANON | VM_ANON_STACK;
+						break;
+					case ANON_EXEC:
+						type = VM_ANON | VM_ANON_EXEC;
+						break;
+					default:
+						ASSERT (0);
+				}
+				break;
+			case VM_FILE:
+				type = VM_FILE;/////////////////////////////////////////////////////////May require more cases
+				break;
+			default:
+				ASSERT (0);
+		}
+		return !(VM_TYPE (type) == VM_ANON && VM_SUBTYPE (type) == VM_ANON_EXEC);
+	}
+	return false;
 }
