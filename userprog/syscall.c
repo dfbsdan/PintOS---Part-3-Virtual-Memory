@@ -726,19 +726,19 @@ check_mem_space_read (const void *addr_, const size_t size, const bool is_str) {
 	if (is_str) { /* String assumed. */
 		ASSERT (size == 0);
 		/* Check the first byte pointed to by ADDR. */
-		if (!valid_user_addr (addr) || get_user (addr) == -1)
+		if (!valid_user_addr (addr, false) || get_user (addr) == -1)
 			thread_exit (-1);
 		/* Check each byte of memory starting at ADDR+1 until NULL is found. */
 		while (*addr) {
 			addr++;
-			if (!valid_user_addr (addr) || get_user (addr) == -1)
+			if (!valid_user_addr (addr, false) || get_user (addr) == -1)
 				thread_exit (-1);
 		}
 	}
 	else {
 		/* Check the SIZE-bytes of memory starting at ADDR. */
 		for (size_t i = 0; i < size; i++) {
-			if (!valid_user_addr (addr) || get_user (addr) == -1)
+			if (!valid_user_addr (addr, false) || get_user (addr) == -1)
 				thread_exit (-1);
 			addr++;
 		}
@@ -772,7 +772,7 @@ check_mem_space_write (const void *addr_, const size_t size) {
 		thread_exit (-1);
 	/* Check the SIZE-bytes of memory starting at ADDR. */
 	for (size_t i = 0; i < size; i++) {
-		if (!valid_user_addr (addr) || !put_user (addr, 0))
+		if (!valid_user_addr (addr, true) || !put_user (addr, 0))
 			thread_exit (-1);
 		addr++;
 	}
@@ -796,13 +796,15 @@ put_user (uint8_t *udst, uint8_t byte) {
 	 kernel page. Returns TRUE if these two conditions are true, FALSE
 	 otherwise. */
 static bool
-valid_user_addr (const uint8_t *addr_) {
+valid_user_addr (const uint8_t *addr_, bool write) {
 	void *addr = (void*)addr_;
 	struct thread *curr = thread_current ();
 	struct page *page = spt_find_page (&curr->spt, addr);
 	enum vm_type type;
-	ASSERT(0);
+
 	if (page && is_user_vaddr(addr)) {
+		if (!write)
+			return true;
 		switch (page->operations->type) {
 			case VM_UNINIT:
 				type = page->uninit.type;
