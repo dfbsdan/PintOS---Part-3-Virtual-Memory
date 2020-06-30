@@ -206,6 +206,7 @@ do_mmap (void *addr, size_t length, int writable, struct file *file,
 	ASSERT (file_length (file) > 0);
 
 	//////////////////////////////////////////////////////////////////////////////TESTING
+	ASSERT (0);
 	if (offset < 0)
 		offset += file_length (file);
 	ASSERT (offset >= 0 && offset <= file_length(file) && pg_ofs(offset) == 0);
