@@ -205,15 +205,12 @@ do_mmap (void *addr, size_t length, int writable, struct file *file,
 	ASSERT (vm_is_page_addr (addr) && length && file);
 	ASSERT (file_length (file) > 0);
 
-	//page_cnt = (length % PGSIZE)? 1 + length / PGSIZE: length / PGSIZE;
-	if (((size_t)offset + length) > (size_t)file_length (file))
-		length = (size_t)(file_length (file) - offset);
-	//////////////////////////////////////////////////////////////////////////////TESTING
-	page_cnt = (length % PGSIZE)? 1 + length / PGSIZE: length / PGSIZE;
 	if (offset < 0)
 		offset += file_length (file);
 	ASSERT (offset >= 0 && offset <= file_length(file) && pg_ofs(offset) == 0);
-	/////////////////////////////////////////////////////////////////////////////////////
+	if (((size_t)offset + length) > (size_t)file_length (file))
+		length = (size_t)(file_length (file) - offset);
+	page_cnt = (length % PGSIZE)? 1 + length / PGSIZE: length / PGSIZE;
 	for (size_t i = 0; i < page_cnt; i++) {
 		if (i != 0) {
 			/* Make sure that FILE is not destroyed until all pages are removed. */
