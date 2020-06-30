@@ -202,7 +202,7 @@ do_mmap (void *addr, size_t length, int writable, struct file *file,
 	size_t page_cnt, read_bytes;
 	void *uaddr = addr;
 
-	ASSERT (vm_is_page_addr (addr) && length && file);
+	ASSERT (vm_is_page_addr (addr) && is_user_vaddr (addr) && length && file);
 	ASSERT (file_length (file) > 0);
 
 	if (offset < 0)
