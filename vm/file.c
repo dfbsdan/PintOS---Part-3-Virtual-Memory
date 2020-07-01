@@ -209,13 +209,14 @@ set_up_mapped_page (const void *uaddr, struct file *file,	off_t offset,
 	ASSERT (read_bytes > 0 && read_bytes <= PGSIZE);//////////////////////////////////////////////////////May not be true
 
 	file_len = (size_t)file_length (file);
+	printf("set_up_mapped_page init: offset: %d, read_bytes: %d, flen: %d\n", (int)offset, (int)read_bytes, (int)file_len);//TEMPORAL
 	if (offset < 0)
 		offset = file_len + offset;
 	ASSERT (offset >= 0);
 	if (read_bytes + offset > file_len)
 		read_bytes = file_len - offset;
 
-	printf("set_up_mapped_page: offset: %d, read_bytes: %d, flen: %d\n", (int)offset, (int)read_bytes, (int)file_len);//TEMPORAL
+	printf("set_up_mapped_page aftr: offset: %d, read_bytes: %d, flen: %d\n", (int)offset, (int)read_bytes, (int)file_len);//TEMPORAL
 
 	/* Setup aux data. */
 	m_elem = (struct file_page*)malloc (sizeof (struct file_page));
