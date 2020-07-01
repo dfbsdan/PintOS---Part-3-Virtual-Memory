@@ -112,7 +112,7 @@ file_map_swap_in (struct page *page, void *kva) {
 	length = file_page->length;
 	ASSERT (file);
 	ASSERT (length <= PGSIZE);
-	ASSERT (((size_t)offset + length) <= (size_t)file_length (file));/////////////May not be correct
+	//ASSERT (((size_t)offset + length) <= (size_t)file_length (file));/////////////May not be correct
 
 	/* Read the data and fill the rest of the page with zeroes. */
 	ASSERT ((size_t)file_read_at (file, kva, length, offset) == length);
@@ -202,8 +202,9 @@ set_up_mapped_page (const void *uaddr, const struct file *file,
 		const off_t offset, const size_t read_bytes, const bool writable) {
 	struct file_page *m_elem;
 
-	ASSERT (vm_is_page_addr (uaddr) && is_user_vaddr (uaddr)
-			&& file && read_bytes > 0 && read_bytes <= PGSIZE);
+	ASSERT (vm_is_page_addr (uaddr) && is_user_vaddr (uaddr) && file
+			&& read_bytes <= PGSIZE);
+	ASSERT (read_bytes > 0);//////////////////////////////////////////////////////May not be true
 
 	/* Setup aux data. */
 	m_elem = (struct file_page*)malloc (sizeof (struct file_page));
