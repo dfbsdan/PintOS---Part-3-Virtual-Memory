@@ -804,5 +804,6 @@ valid_user_addr (const uint8_t *addr_, bool write) {
 	struct page *page = spt_find_page (&curr->spt, addr);
 
 	return (page && is_user_vaddr(addr) && (!write || page->writable)
-			&& (pml4_get_page (curr->pml4, addr) || vm_claim_page (addr, &curr->spt)));
+			&& (pml4_get_page (curr->pml4, page->va)
+					|| vm_claim_page (page->va, &curr->spt)));
 }
