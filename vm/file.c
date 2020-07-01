@@ -184,8 +184,9 @@ file_map_destroy (struct page *page) {
 				&& pml4_get_page (page->t->pml4, page->va) == kva);
 		ASSERT (!hash_find (&um_table, &file_page->um_elem));
 		/* Writeback all the modified contents to the storage, if modified. */
-		if (pml4_is_dirty (page->t->pml4, page->va))
+		if (pml4_is_dirty (page->t->pml4, page->va)) {
 			ASSERT ((size_t)file_write_at (file, kva, length, offset) == length);
+		}
 		pml4_clear_page (page->t->pml4, page->va);
 		palloc_free_page (kva);
 		free (page->frame);
@@ -220,10 +221,9 @@ set_up_mapped_page (const void *uaddr, const struct file *file,
 
 /* Do the mmap */
 void *
-do_mmap (const void *addr, size_t length, const int writable,
-		const struct file *file, off_t offset) {
-
-	size_t page_cnt, read_bytes;
+do_mmap (void *addr, size_t length, int writable, struct file *file,
+		off_t offset) {
+	size_t read_bytes;
 	void *uaddr = addr;
 
 	ASSERT (vm_is_page_addr (addr) && is_user_vaddr (addr) && length && file);
