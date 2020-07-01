@@ -120,7 +120,7 @@ file_map_swap_in (struct page *page, void *kva) {
 		ASSERT ((length + offset) <= file_len);
 	}
 	else
-		ASSERT (offset >= file_len);
+		ASSERT ((size_t)offset >= file_len);
 
 	/* Read the data and fill the rest of the page with zeroes. */
 	ASSERT ((size_t)file_read_at (file, kva, length, offset) == length);
@@ -161,7 +161,7 @@ file_map_swap_out (struct page *page) {
 		ASSERT ((length + offset) <= file_len);
 	}
 	else
-		ASSERT (offset >= file_len);
+		ASSERT ((size_t)offset >= file_len);
 
 	ASSERT ((size_t)file_write_at (file, kva, length, offset) == length);
 	ASSERT (!hash_insert (&um_table, &file_page->um_elem));
@@ -195,7 +195,7 @@ file_map_destroy (struct page *page) {
 		ASSERT ((length + offset) <= file_len);
 	}
 	else
-		ASSERT (offset >= file_len);
+		ASSERT ((size_t)offset >= file_len);
 	/* Handle mapped page. */
 	if (pml4_get_page (page->t->pml4, page->va)) {
 		ASSERT (page->frame);
@@ -222,7 +222,14 @@ set_up_mapped_page (void *uaddr, struct file *file,	off_t offset,
 		size_t read_bytes, const bool writable, size_t page_cnt) {
 	struct file_page *m_elem;
 
-	ASSERT (vm_is_page_addr (uaddr) && is_user_vaddr (uaddr));
+	//ASSERT (vm_is_page_addr (uaddr) && is_user_vaddr (uaddr));
+	//////////////////////////////////////////////////////////////////////////////TESTING
+	ASSERT (vm_is_page_addr (uaddr));
+	if (!is_user_vaddr (uaddr)) {
+		printf("uaddr: %p, offset: %d, read_bytes: %d, page_cnt: %d\n", uaddr, (int)offset, (int)read_bytes, (int)page_cnt);
+		ASSERT (0);
+	}
+	/////////////////////////////////////////////////////////////////////////////////////
 	ASSERT (file && offset >= 0);
 	ASSERT (read_bytes <= PGSIZE);
 
@@ -232,7 +239,7 @@ set_up_mapped_page (void *uaddr, struct file *file,	off_t offset,
 		ASSERT ((read_bytes + offset) <= file_len);
 	}
 	else
-		ASSERT (offset >= file_len);
+		ASSERT ((size_t)offset >= file_len);
 	/* Setup aux data. */
 	m_elem = (struct file_page*)malloc (sizeof (struct file_page));
 	if (m_elem) {
@@ -267,6 +274,7 @@ do_mmap (void *addr, size_t length, int writable, struct file *file,
 	/* Set length to be the actual number of bytes to read. */
 	if (length + offset > file_len)
 		length = file_len - offset;
+	printf("do_mmap: addr: %p, offset: %d, length: %d, page_cnt: %d\n", addr, (int)offset, (int)length, (int)page_cnt);
 	/* Set up the first page. */
 	read_bytes = length < PGSIZE ? length : PGSIZE;
 	if (!set_up_mapped_page (uaddr, file, offset, read_bytes, writable, page_cnt)) {
