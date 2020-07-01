@@ -234,7 +234,7 @@ set_up_mapped_page (const void *uaddr, struct file *file,	off_t offset,
 	else
 		ASSERT (offset >= file_len);
 
-	printf("set_up_mapped_page: offset: %d, read_bytes: %d, flen: %d\n", (int)offset, (int)read_bytes, (int)file_len);//TEMPORAL
+	printf("set_up_mapped_page: offset: %d, read_bytes: %d, flen: %d, page_cnt: %d\n", (int)offset, (int)read_bytes, (int)file_len, (int)page_cnt);//TEMPORAL
 
 	/* Setup aux data. */
 	m_elem = (struct file_page*)malloc (sizeof (struct file_page));
