@@ -222,14 +222,9 @@ set_up_mapped_page (void *uaddr, struct file *file,	off_t offset,
 		size_t read_bytes, const bool writable, size_t page_cnt) {
 	struct file_page *m_elem;
 
-	//ASSERT (vm_is_page_addr (uaddr) && is_user_vaddr (uaddr));
-	//////////////////////////////////////////////////////////////////////////////TESTING
-	ASSERT (vm_is_page_addr (uaddr));
-	if (!is_user_vaddr (uaddr)) {
-		printf("uaddr: %p, offset: %d, read_bytes: %d, page_cnt: %d\n", uaddr, (int)offset, (int)read_bytes, (int)page_cnt);
-		ASSERT (0);
-	}
-	/////////////////////////////////////////////////////////////////////////////////////
+	printf("set_up_mapped_page: uaddr: %p, offset: %d, read_bytes: %d, page_cnt: %d\n", uaddr, (int)offset, (int)read_bytes, (int)page_cnt);
+
+	ASSERT (vm_is_page_addr (uaddr) && is_user_vaddr (uaddr));
 	ASSERT (file && offset >= 0);
 	ASSERT (read_bytes <= PGSIZE);
 
