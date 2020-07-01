@@ -664,10 +664,10 @@ syscall_mmap (void *addr, size_t length, int writable, int fd, off_t offset) {
 	ASSERT (fd_t->size <= MAX_FD + 1);
 
 	//check fail conditions
-	if (length == 0 || !vm_is_page_addr(addr) || !is_user_vaddr (addr) || pg_ofs(offset) != 0
+	if (length == 0 || !vm_is_page_addr(addr) || !is_user_vaddr (addr)
+			|| !is_user_vaddr (addr + length)	|| pg_ofs(offset) != 0
 			|| fd < 0 || fd > MAX_FD)
 		return NULL;
-
 
 	file_descriptor = &fd_t->table[fd];
 	if (file_descriptor->fd_t == FDT_STDIN || file_descriptor->fd_t == FDT_STDOUT)
