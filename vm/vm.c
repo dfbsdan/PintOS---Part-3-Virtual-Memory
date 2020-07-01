@@ -410,7 +410,6 @@ supplemental_page_table_copy (struct supplemental_page_table *dst,
 				page_copy, parent_pg) && vm_claim_page (parent_pg->va, dst)))
 			return false;
 	}
-	ASSERT (hash_size (&dst->table) == hash_size (&src->table));
 	return true;
 }
 
