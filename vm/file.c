@@ -200,12 +200,20 @@ file_map_destroy (struct page *page) {
  * Returns TRUE on success, FALSE otherwise. */
 static bool
 set_up_mapped_page (const void *uaddr, struct file *file,	const off_t offset,
-		const size_t read_bytes, const bool writable) {
+		size_t read_bytes, const bool writable) {
 	struct file_page *m_elem;
+	size_t file_length;
 
 	ASSERT (vm_is_page_addr (uaddr) && is_user_vaddr (uaddr) && file
-			&& read_bytes <= PGSIZE);
-	ASSERT (read_bytes > 0);//////////////////////////////////////////////////////May not be true
+			&& file_length (file) > 0);
+	ASSERT (read_bytes > 0 && read_bytes <= PGSIZE);//////////////////////////////////////////////////////May not be true
+
+	file_length = (size_t)file_length (file);
+	if (offset < 0)
+		offset = file_length + offset;
+	ASSERT (offset >= 0);
+	if (read_bytes + offset > file_length)
+		read_bytes = file_length - offset;
 
 	printf("set_up_mapped_page: offset: %d, read_bytes: %d, flen: %d\n", (int)offset, (int)read_bytes, (int)file_length(file));//TEMPORAL
 
