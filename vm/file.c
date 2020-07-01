@@ -325,10 +325,18 @@ do_munmap (void *addr, bool error) {
 			ASSERT (error);
 			return;
 		}
-		ASSERT (VM_TYPE (page->operations->type) == VM_FILE);
-		if (page->file.page_cnt != 0) { //TESTING
-			printf("do_munmap worng page_cnt: addr: %p, page_cnt: %d\n", addr, (int)page->file.page_cnt);
-			ASSERT (0);
+		ASSERT (VM_TYPE (page->operations->type) == VM_FILE
+				|| (VM_TYPE (page->operations->type) == VM_UNINIT && ))
+		switch (VM_TYPE (page->operations->type)) {
+			case VM_UNINIT:
+				struct file_page *m_elem = (struct file_page *)page->uninit.aux;
+				ASSERT (aux->page_cnt == 0);
+				break;
+			case VM_FILE:
+				ASSERT (page->file.page_cnt == 0);
+				break;
+			default:
+				ASSERT (O);
 		}
 		spt_remove_page (spt, page);
 		addr += PGSIZE;
