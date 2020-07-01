@@ -385,7 +385,8 @@ supplemental_page_table_copy (struct supplemental_page_table *dst,
 		switch (parent_pg->operations->type) {
 			case VM_UNINIT:
 				type = parent_pg->uninit.type;
-				break;
+				if (VM_TYPE (type) == VM_FILE)
+					continue; //Mapping are not inherited
 			case VM_ANON:
 				switch (parent_pg->anon.a_type) {
 					case ANON_STACK:
@@ -399,11 +400,11 @@ supplemental_page_table_copy (struct supplemental_page_table *dst,
 				}
 				break;
 			case VM_FILE:
-				type = VM_FILE;/////////////////////////////////////////////////////////May require more cases
-				break;
+				continue; //Mapping are not inherited
 			default:
 				ASSERT (0);
 		}
+		ASSERT (VM_TYPE (type) != VM_FILE);
 		/* Initialize and copy page. */
 		if (!(vm_alloc_page_with_initializer (type, parent_pg->va, parent_pg->writable,
 				page_copy, parent_pg) && vm_claim_page (parent_pg->va, dst)))
