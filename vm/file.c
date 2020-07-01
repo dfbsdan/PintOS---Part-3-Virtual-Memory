@@ -322,7 +322,6 @@ do_munmap (void *addr, bool error) {
 			ASSERT (0);
 	}
 	page_cnt = page->file.page_cnt;
-	ASSERT (page_cnt >= 1);
 	spt_remove_page (spt, page);
 	addr += PGSIZE;
 	/* Remove all remaining pages. */
