@@ -16,7 +16,7 @@ static vm_initializer page_copy;
 
 /* Checks if a given address corresponds to the one of a page. */
 bool
-vm_is_page_addr (void *va) {
+vm_is_page_addr (const void *va) {
 	return va && pg_round_down (va) == va;
 }
 

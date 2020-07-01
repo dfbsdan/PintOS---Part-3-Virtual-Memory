@@ -194,12 +194,72 @@ file_map_destroy (struct page *page) {
 	file_close (file_page->file);
 }
 
+/* Set up the auxiliary data for a file mapped page and the page itself.
+ * Returns TRUE on success, FALSE otherwise. */
+static bool
+set_up_mapped_page (const void *uaddr, const struct file *file,
+		const off_t offset, const size_t read_bytes, const bool writable) {
+	struct file_page *m_elem;
+
+	ASSERT (vm_is_page_addr (uaddr) && is_user_vaddr (uaddr)
+			&& file && read_bytes > 0 && read_bytes <= PGSIZE);
+
+	/* Setup aux data. */
+	m_elem = (struct file_page*)malloc (sizeof (struct file_page));
+	if (m_elem) {
+		m_elem->file = file;
+		m_elem->offset = offset;
+		m_elem->length = read_bytes;
+		/* Setup page. */
+		if (vm_alloc_page_with_initializer (VM_FILE, uaddr, writable, NULL, m_elem))
+			return true;
+		free (m_elem);
+	}
+	return false;
+}
+
 /* Do the mmap */
 void *
-do_mmap (void *addr, size_t length, int writable, struct file *file,
+do_mmap (const void *addr, size_t length, const int writable,
+		const struct file *file, off_t offset) {
+
+	size_t page_cnt, read_bytes;
+	void *uaddr = addr;
+
+	ASSERT (vm_is_page_addr (addr) && is_user_vaddr (addr) && length && file);
+	ASSERT (file_length (file) > 0);
+
+	/* Set up the first page. */
+	read_bytes = length < PGSIZE ? length : PGSIZE;
+	if (!set_up_mapped_page (uaddr, file, offset, read_bytes, writable)) {
+		file_close (file);
+		return NULL;
+	}
+	uaddr += PGSIZE;
+	offset += read_bytes;
+	length -= read_bytes;
+	/* Setup all remaining pages. */
+	while (length > 0) {
+		read_bytes = length < PGSIZE ? length : PGSIZE;
+		if (!set_up_mapped_page (uaddr, file, offset, read_bytes, writable))
+			return NULL;
+		/* Make sure that FILE is not destroyed until all pages are removed. */
+		ASSERT (file_dup2 (file));
+		/* Advance. */
+		uaddr += PGSIZE;
+		offset += read_bytes;
+		length -= read_bytes;
+	}
+	ASSERT (length == 0);
+	return addr;
+}
+
+/* Do the mmap */
+void *
+old_do_mmap (void *addr, size_t length, int writable, struct file *file,
 		off_t offset) {
 	struct file_page *m_elem;
-	size_t page_cnt, read_bytes;
+	size_t page_cnt;
 	void *uaddr = addr;
 
 	ASSERT (vm_is_page_addr (addr) && is_user_vaddr (addr) && length && file);
