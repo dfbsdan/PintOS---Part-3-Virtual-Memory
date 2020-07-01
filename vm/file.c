@@ -309,7 +309,18 @@ do_munmap (void *addr, bool error) {
 
 	/* Get number of pages and remove the first one. */
 	page = spt_find_page (spt, addr);
-	ASSERT (page && VM_TYPE (page->operations->type) == VM_FILE);
+	ASSERT (page);
+	switch (VM_TYPE (page->operations->type)) {
+		case VM_UNINIT:
+			m_elem = (struct file_page *)page->uninit.aux;
+			ASSERT (m_elem->page_cnt > 0);
+			break;
+		case VM_FILE:
+			ASSERT (page->file.page_cnt > 0);
+			break;
+		default:
+			ASSERT (0);
+	}
 	page_cnt = page->file.page_cnt;
 	ASSERT (page_cnt >= 1);
 	spt_remove_page (spt, page);
