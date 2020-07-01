@@ -308,6 +308,7 @@ do_munmap (void *addr, bool error) {
 	struct supplemental_page_table *spt = &thread_current ()->spt;
 	struct page *page;
 	size_t page_cnt;
+	struct file_page *m_elem;
 
 	ASSERT (vm_is_page_addr (addr));
 
@@ -327,7 +328,7 @@ do_munmap (void *addr, bool error) {
 		}
 		switch (VM_TYPE (page->operations->type)) {
 			case VM_UNINIT:
-				struct file_page *m_elem = (struct file_page *)page->uninit.aux;
+				m_elem = (struct file_page *)page->uninit.aux;
 				ASSERT (m_elem->page_cnt == 0);
 				break;
 			case VM_FILE:
