@@ -800,7 +800,6 @@ valid_user_addr (const uint8_t *addr_, bool write) {
 	void *addr = (void*)addr_;
 	struct thread *curr = thread_current ();
 	struct page *page = spt_find_page (&curr->spt, addr);
-	enum vm_type type;
 
 	return (page && is_user_vaddr(addr) && (!write || page->writable));
 }

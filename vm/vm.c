@@ -63,7 +63,7 @@ vm_alloc_page_with_initializer (enum vm_type type, void *va, bool writable,
 	struct page *new_page;
 
 	ASSERT (VM_TYPE (type) != VM_UNINIT);
-	ASSERT (vm_is_page_addr (va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (vm_is_page_addr (va));
 
 	/* Check wheter the upage is already occupied or not. */
 	if (!spt_find_page (spt, va)) {
@@ -88,7 +88,6 @@ vm_alloc_page_with_initializer (enum vm_type type, void *va, bool writable,
 		new_page->t = thread_current ();
 		/* Insert the page into the spt. */
 		ASSERT (spt_insert_page (spt, new_page));
-		//printf("vm_alloc_page_with_initializer: new_page addr: %p\n", new_page); ///TEMPORAL: TESTING
 		return true;
 	}
 	return false;
@@ -272,9 +271,7 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr, bool user,
 		} else
 			return false; //Writing r/o page
 	} else { //Kernel fault
-		//printf("vm_try_handle_fault: Kernel Fault\n");//////////////////////////////TEMPORAL
 		ASSERT (not_present);
-		//printf("vm_try_handle_fault: Not present fault\n");/////////////////////////TEMPORAL
 		page = spt_find_page (spt, pg_va);
 		ASSERT (page);
 		return vm_do_claim_page (page);
@@ -302,7 +299,6 @@ vm_claim_page (void *va, struct supplemental_page_table *spt) {
 	if (!page) //The page does not exist
 		return false;
 	ASSERT (page->va == va);
-	//printf("vm_claim_page: calling vm_do_claim_page\n"); /////////////////////////TEMPORAL: TESTING
 	return vm_do_claim_page (page);
 }
 
@@ -326,13 +322,11 @@ vm_do_claim_page (struct page *page) {
 		/* Correct way of handling swap_in error?
 		(Assumption so far: The page is already well-mapped so it can be destroyed
 		with no issue by the caller). */
-		//printf("vm_do_claim_page: swapping in\n"); /////////////////////////////////TEMPORAL: TESTING
 		return swap_in (page, frame->kva);//////////////////////////////////////////May have issues
 	}
 	palloc_free_page (frame->kva);
 	free (frame);
 	page->frame = NULL;
-	printf("vm_do_claim_page: failure\n"); ///////////////////////////////////////TEMPORAL: TESTING
 	return false;
 }
 
