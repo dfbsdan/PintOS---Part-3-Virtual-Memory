@@ -202,20 +202,20 @@ static bool
 set_up_mapped_page (const void *uaddr, struct file *file,	const off_t offset,
 		size_t read_bytes, const bool writable) {
 	struct file_page *m_elem;
-	size_t file_length;
+	size_t file_len;
 
 	ASSERT (vm_is_page_addr (uaddr) && is_user_vaddr (uaddr) && file
 			&& file_length (file) > 0);
 	ASSERT (read_bytes > 0 && read_bytes <= PGSIZE);//////////////////////////////////////////////////////May not be true
 
-	file_length = (size_t)file_length (file);
+	file_len = (size_t)file_length (file);
 	if (offset < 0)
-		offset = file_length + offset;
+		offset = file_len + offset;
 	ASSERT (offset >= 0);
-	if (read_bytes + offset > file_length)
-		read_bytes = file_length - offset;
+	if (read_bytes + offset > file_len)
+		read_bytes = file_len - offset;
 
-	printf("set_up_mapped_page: offset: %d, read_bytes: %d, flen: %d\n", (int)offset, (int)read_bytes, (int)file_length(file));//TEMPORAL
+	printf("set_up_mapped_page: offset: %d, read_bytes: %d, flen: %d\n", (int)offset, (int)read_bytes, (int)file_len);//TEMPORAL
 
 	/* Setup aux data. */
 	m_elem = (struct file_page*)malloc (sizeof (struct file_page));
