@@ -706,7 +706,7 @@ syscall_munmap (void *addr) {
 		return;
 	page = spt_find_page (&thread_current ()->spt, addr);
 	if (!page || VM_TYPE (page->operations->type) != VM_FILE
-			|| page->file->page_cnt < 1)
+			|| page->file.page_cnt < 1)
 		return;
 	do_munmap (addr, false);
 }

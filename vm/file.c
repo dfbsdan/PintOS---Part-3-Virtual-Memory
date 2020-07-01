@@ -310,7 +310,7 @@ do_munmap (void *addr, bool error) {
 	/* Get number of pages and remove the first one. */
 	page = spt_find_page (spt, addr);
 	ASSERT (page && VM_TYPE (page->operations->type) == VM_FILE);
-	page_cnt = page->file->page_cnt;
+	page_cnt = page->file.page_cnt;
 	ASSERT (page_cnt >= 1);
 	spt_remove_page (spt, page);
 	addr += PGSIZE;
@@ -322,7 +322,7 @@ do_munmap (void *addr, bool error) {
 			return;
 		}
 		ASSERT (VM_TYPE (page->operations->type) == VM_FILE
-				&& page->file->page_cnt == 0);
+				&& page->file.page_cnt == 0);
 		spt_remove_page (spt, page);
 		addr += PGSIZE;
 	}
