@@ -705,9 +705,10 @@ syscall_munmap (void *addr) {
 	if (!vm_is_page_addr (addr))
 		return;
 	page = spt_find_page (&thread_current ()->spt, addr);
-	if (!page || VM_TYPE (page->operations->type) != VM_FILE)
+	if (!page || VM_TYPE (page->operations->type) != VM_FILE
+			|| page->file->page_cnt < 1)
 		return;
-	do_munmap (addr);
+	do_munmap (addr, false);
 }
 
 
