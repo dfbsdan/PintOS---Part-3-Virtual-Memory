@@ -234,7 +234,7 @@ set_up_mapped_page (const void *uaddr, struct file *file,	off_t offset,
 	else
 		ASSERT (offset >= file_len);
 
-	printf("set_up_mapped_page: offset: %d, read_bytes: %d, flen: %d, page_cnt: %d\n", (int)offset, (int)read_bytes, (int)file_len, (int)page_cnt);//TEMPORAL
+	printf("set_up_mapped_page: addr: %p, offset: %d, read_bytes: %d, flen: %d, page_cnt: %d\n", uaddr, (int)offset, (int)read_bytes, (int)file_len, (int)page_cnt);//TEMPORAL
 
 	/* Setup aux data. */
 	m_elem = (struct file_page*)malloc (sizeof (struct file_page));
@@ -325,8 +325,11 @@ do_munmap (void *addr, bool error) {
 			ASSERT (error);
 			return;
 		}
-		ASSERT (VM_TYPE (page->operations->type) == VM_FILE
-				&& page->file.page_cnt == 0);
+		ASSERT (VM_TYPE (page->operations->type) == VM_FILE);
+		if (page->file.page_cnt != 0) { //TESTING
+			printf("do_munmap worng page_cnt: addr: %p, page_cnt: %d\n", addr, (int)page->file.page_cnt);
+			ASSERT (0);
+		}
 		spt_remove_page (spt, page);
 		addr += PGSIZE;
 	}
