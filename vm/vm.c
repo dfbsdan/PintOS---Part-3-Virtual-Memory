@@ -115,7 +115,7 @@ bool
 spt_insert_page (struct supplemental_page_table *spt, struct page *page) {
 	ASSERT (spt);
 	ASSERT (page);
-	ASSERT (vm_is_page_addr (page->va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (vm_is_page_addr (page->va));
 	return hash_insert (&spt->table, &page->h_elem) == NULL;
 }
 
@@ -215,7 +215,7 @@ vm_get_frame (void) {
 		if (!frame)
 			PANIC ("Could not evict a frame");
 	} else {
-		ASSERT (vm_is_page_addr (kva)); ///////////////////////////////////////////////Debugging purposes: May be incorrect
+		ASSERT (vm_is_page_addr (kva));
 		frame = (struct frame*)malloc (sizeof (struct frame));
 		if (!frame)
 			PANIC ("Insufficient space for a frame");
@@ -292,7 +292,7 @@ bool
 vm_claim_page (void *va, struct supplemental_page_table *spt) {
 	struct page *page;
 
-	ASSERT (vm_is_page_addr (va)); //////////////////////////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (vm_is_page_addr (va));
 	ASSERT (spt);
 
 	page = spt_find_page (spt, va);
@@ -310,7 +310,7 @@ vm_do_claim_page (struct page *page) {
 
 	ASSERT (page);
 	ASSERT (thread_is_user (page->t));
-	ASSERT (vm_is_page_addr (page->va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (vm_is_page_addr (page->va));
 	pml4 = page->t->pml4;
 	ASSERT (!pml4_get_page (pml4, page->va)); //Must NOT be mapped already ///////Use return instead of assert?
 
@@ -338,7 +338,7 @@ spt_hash_func (const struct hash_elem *e, void *spt_ UNUSED) {
 	ASSERT (e);
 
 	page = hash_entry (e, struct page, h_elem);
-	ASSERT (vm_is_page_addr (page->va)); ////////////////////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (vm_is_page_addr (page->va));
 	return hash_bytes (&page->va, sizeof (page->va));
 }
 
@@ -354,8 +354,8 @@ spt_less_func (const struct hash_elem *a, const struct hash_elem *b,
 
 	a_page = hash_entry (a, struct page, h_elem);
 	b_page = hash_entry (b, struct page, h_elem);
-	ASSERT (vm_is_page_addr (a_page->va)); //////////////////////////////////////////Debugging purposes: May be incorrect
-	ASSERT (vm_is_page_addr (b_page->va)); //////////////////////////////////////////Debugging purposes: May be incorrect
+	ASSERT (vm_is_page_addr (a_page->va));
+	ASSERT (vm_is_page_addr (b_page->va));
 	return a_page->va < b_page->va;
 }
 
