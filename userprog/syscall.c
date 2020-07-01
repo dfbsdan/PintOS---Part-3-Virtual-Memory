@@ -11,6 +11,7 @@
 #include "threads/init.h"
 #include "threads/vaddr.h"
 #include "threads/palloc.h"
+#include "threads/mmu.h"
 #include "filesys/filesys.h"
 #include "filesys/file.h"
 #include "devices/input.h"
@@ -802,5 +803,6 @@ valid_user_addr (const uint8_t *addr_, bool write) {
 	struct thread *curr = thread_current ();
 	struct page *page = spt_find_page (&curr->spt, addr);
 
-	return (page && is_user_vaddr(addr) && (!write || page->writable));
+	return (page && is_user_vaddr(addr) && (!write || page->writable)
+			&& (pml4_get_page (curr->pml4, addr) || vm_claim_page (addr, &curr->spt)));
 }
