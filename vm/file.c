@@ -199,8 +199,8 @@ file_map_destroy (struct page *page) {
 /* Set up the auxiliary data for a file mapped page and the page itself.
  * Returns TRUE on success, FALSE otherwise. */
 static bool
-set_up_mapped_page (const void *uaddr, const struct file *file,
-		const off_t offset, const size_t read_bytes, const bool writable) {
+set_up_mapped_page (const void *uaddr, struct file *file,	const off_t offset,
+		const size_t read_bytes, const bool writable) {
 	struct file_page *m_elem;
 
 	ASSERT (vm_is_page_addr (uaddr) && is_user_vaddr (uaddr) && file
