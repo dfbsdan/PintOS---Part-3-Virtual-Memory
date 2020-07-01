@@ -228,8 +228,8 @@ set_up_mapped_page (const void *uaddr, struct file *file,	off_t offset,
 
 	size_t file_len = (size_t)file_length (file);
 	ASSERT (file_len > 0);
-	if (length) {
-		ASSERT ((length + offset) <= file_len);
+	if (read_bytes) {
+		ASSERT ((read_bytes + offset) <= file_len);
 	}
 	else
 		ASSERT (offset >= file_len);
