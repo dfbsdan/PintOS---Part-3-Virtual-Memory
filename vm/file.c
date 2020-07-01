@@ -7,6 +7,7 @@
 #include "threads/mmu.h"
 #include <string.h>
 #include <hash.h>
+#include <stdio.h>//////////////////////////////////////////////////////////////TEMPORAL
 
 static hash_hash_func m_hash_func;
 static hash_less_func m_less_func;
@@ -205,6 +206,8 @@ set_up_mapped_page (const void *uaddr, const struct file *file,
 	ASSERT (vm_is_page_addr (uaddr) && is_user_vaddr (uaddr) && file
 			&& read_bytes <= PGSIZE);
 	ASSERT (read_bytes > 0);//////////////////////////////////////////////////////May not be true
+
+	printf("set_up_mapped_page: offset: %d, read_bytes: %d, flen: %d\n", (int)offset, (int)read_bytes, (int)file_length(file));//TEMPORAL
 
 	/* Setup aux data. */
 	m_elem = (struct file_page*)malloc (sizeof (struct file_page));
