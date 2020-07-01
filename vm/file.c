@@ -116,8 +116,9 @@ file_map_swap_in (struct page *page, void *kva) {
 	ASSERT (length <= PGSIZE);
 	size_t file_len = (size_t)file_length (file);
 	ASSERT (file_len > 0);
-	if (length)
+	if (length) {
 		ASSERT ((length + offset) <= file_len);
+	}
 	else
 		ASSERT (offset >= file_len);
 
@@ -156,8 +157,9 @@ file_map_swap_out (struct page *page) {
 	ASSERT (length <= PGSIZE);
 	size_t file_len = (size_t)file_length (file);
 	ASSERT (file_len > 0);
-	if (length)
+	if (length) {
 		ASSERT ((length + offset) <= file_len);
+	}
 	else
 		ASSERT (offset >= file_len);
 
@@ -189,8 +191,9 @@ file_map_destroy (struct page *page) {
 	ASSERT (length <= PGSIZE);
 	size_t file_len = (size_t)file_length (file);
 	ASSERT (file_len > 0);
-	if (length)
+	if (length) {
 		ASSERT ((length + offset) <= file_len);
+	}
 	else
 		ASSERT (offset >= file_len);
 	/* Handle mapped page. */
@@ -225,8 +228,9 @@ set_up_mapped_page (const void *uaddr, struct file *file,	off_t offset,
 
 	size_t file_len = (size_t)file_length (file);
 	ASSERT (file_len > 0);
-	if (read_bytes)
-		ASSERT ((read_bytes + offset) <= file_len);
+	if (length) {
+		ASSERT ((length + offset) <= file_len);
+	}
 	else
 		ASSERT (offset >= file_len);
 
