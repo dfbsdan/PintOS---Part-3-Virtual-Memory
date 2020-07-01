@@ -234,8 +234,8 @@ do_mmap (void *addr, size_t length, int writable, struct file *file,
 	ASSERT (file_length (file) > 0);
 
 	//////////////////////////////////////////////////////////////////////////////TESTING
-	printf("do_mmap init: offset: %d, read_bytes: %d, flen: %d\n", (int)offset, (int)read_bytes, (int)file_len);
 	size_t file_len = (size_t)file_length (file);
+	printf("do_mmap init: offset: %d, read_bytes: %d, flen: %d\n", (int)offset, (int)read_bytes, (int)file_len);
 	if (offset < 0)
 		offset = file_len + offset;
 	ASSERT (offset >= 0);
