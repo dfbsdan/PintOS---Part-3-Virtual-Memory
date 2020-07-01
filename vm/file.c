@@ -218,7 +218,7 @@ file_map_destroy (struct page *page) {
 /* Set up the auxiliary data for a file mapped page and the page itself.
  * Returns TRUE on success, FALSE otherwise. */
 static bool
-set_up_mapped_page (const void *uaddr, struct file *file,	off_t offset,
+set_up_mapped_page (void *uaddr, struct file *file,	off_t offset,
 		size_t read_bytes, const bool writable, size_t page_cnt) {
 	struct file_page *m_elem;
 
@@ -325,18 +325,16 @@ do_munmap (void *addr, bool error) {
 			ASSERT (error);
 			return;
 		}
-		ASSERT (VM_TYPE (page->operations->type) == VM_FILE
-				|| (VM_TYPE (page->operations->type) == VM_UNINIT && ))
 		switch (VM_TYPE (page->operations->type)) {
 			case VM_UNINIT:
 				struct file_page *m_elem = (struct file_page *)page->uninit.aux;
-				ASSERT (aux->page_cnt == 0);
+				ASSERT (m_elem->page_cnt == 0);
 				break;
 			case VM_FILE:
 				ASSERT (page->file.page_cnt == 0);
 				break;
 			default:
-				ASSERT (O);
+				ASSERT (0);
 		}
 		spt_remove_page (spt, page);
 		addr += PGSIZE;
