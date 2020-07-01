@@ -235,13 +235,13 @@ do_mmap (void *addr, size_t length, int writable, struct file *file,
 
 	//////////////////////////////////////////////////////////////////////////////TESTING
 	size_t file_len = (size_t)file_length (file);
-	printf("do_mmap init: offset: %d, read_bytes: %d, flen: %d\n", (int)offset, (int)read_bytes, (int)file_len);
+	printf("do_mmap init: offset: %d, length: %d, flen: %d\n", (int)offset, (int)length, (int)file_len);
 	if (offset < 0)
 		offset = file_len + offset;
 	ASSERT (offset >= 0);
 	if (length + offset > file_len)
 		length = file_len - offset;
-	printf("do_mmap aftr: offset: %d, read_bytes: %d, flen: %d\n", (int)offset, (int)read_bytes, (int)file_len);
+	printf("do_mmap aftr: offset: %d, length: %d, flen: %d\n", (int)offset, (int)length, (int)file_len);
 	/////////////////////////////////////////////////////////////////////////////////////
 
 	/* Set up the first page. */
