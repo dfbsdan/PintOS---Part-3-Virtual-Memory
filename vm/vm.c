@@ -275,7 +275,7 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr, bool user,
 				////////////////////////////////////////////////////////////////////////TESTING
 				printf("vm_try_handle_fault: pgaddr: %p, esp: %p\n", pg_va, (void*)f->rsp);
 				if (addr >= (void*)f->rsp - 8 && stack_pg (pg_va, (void*)f->rsp, spt)) {
-					printf("vm_try_handle_fault: Growing stack, esp is page: %d\n" NULL != spt_find_page (spt, (void*)f->rsp));
+					printf("vm_try_handle_fault: Growing stack, esp is page: %d\n", NULL != spt_find_page (spt, (void*)f->rsp));
 					//printf("vm_try_handle_fault: pgaddr: %p, page below is stack: %d\n", pg_va);
 					return vm_stack_growth (addr);
 				}
