@@ -273,6 +273,7 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr, bool user,
 			page = spt_find_page (spt, pg_va);
 			if (!page) { //Unexisting page
 				/* Recover if stack overflow. */
+				printf("vm_try_handle_fault: Testing for stack growth: addr: %p, pgaddr: %p, esp: %p\n", addr, pg_va, (void*)f->rsp);//TESTING
 				if (addr >= (void*)f->rsp - 8 && is_stack_pg (pg_va, (void*)f->rsp, spt))
 					return vm_stack_growth (addr);
 				return false; //Unexisting non-stack page
