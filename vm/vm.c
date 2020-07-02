@@ -252,7 +252,8 @@ is_stack_pg (void *pgaddr, void *esp, struct supplemental_page_table *spt) {
 	ASSERT (spt);
 
 	printf("is_stack_pg: pgaddr: %p, esppg: %p\n", pgaddr, esp);//////////////////TESTING
-	return pgaddr == esp
+	//return pgaddr == esp
+	return pgaddr == esp || pg_round_down (pgaddr - 1) == esp/////////////////////TESTING
 			|| ((page = spt_find_page (spt, pgaddr - 1))
 					&& page->operations->type == VM_ANON
 					&& page->anon.a_type == ANON_STACK);
