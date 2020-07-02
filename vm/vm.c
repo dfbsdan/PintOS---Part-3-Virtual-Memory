@@ -383,6 +383,7 @@ supplemental_page_table_copy (struct supplemental_page_table *dst,
 				type = parent_pg->uninit.type;
 				if (VM_TYPE (type) == VM_FILE)
 					continue; //Mapping are not inherited
+				break;
 			case VM_ANON:
 				switch (parent_pg->anon.a_type) {
 					case ANON_STACK:
