@@ -259,7 +259,7 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr, bool user,
 				pg_va = pg_round_up (addr);
 				ASSERT (pg_va >= addr);
 				if (addr >= (void*)f->rsp - 8) {
-					printf("vm_try_handle_fault: Growing stack: addr: %p, esp: %p\n", addr, (void*)f->rsp);
+					printf("vm_try_handle_fault: Growing stack: addr: %p, esp_up: %p, esp_dwn: %p\n", addr, pg_round_up((void*)f->rsp), pg_round_down((void*)f->rsp));
 					return vm_stack_growth (addr);
 				}
 				///////////////////////////////////////////////////////////////////////////////
