@@ -260,7 +260,7 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr, bool user,
 				ASSERT (pg_va >= addr);
 				if (addr >= (void*)f->rsp - 8) {
 					printf("vm_try_handle_fault: Growing stack: pgaddr: %p, esp_up: %p, esp_dwn: %p\n", pg_va, pg_round_up((void*)f->rsp), pg_round_down((void*)f->rsp));
-					printf("vm_try_handle_fault: pgaddr: %p, page below is stack: %d\n", pg_va, ((page = spt_find_page (spt, pg_va - 1)) && page->operations->type == VM_ANON && page->anon.a_type == ANON_STACK));
+					printf("vm_try_handle_fault: pgaddr: %p, page below is stack: %d\n", pg_va, ((page = spt_find_page (spt, pg_va - 1)) && page->operations->type == VM_ANON && page->anon.a_type == ANON_STACK) || pg_va == pg_round_up((void*)f->rsp));
 					return vm_stack_growth (addr);
 				}
 				///////////////////////////////////////////////////////////////////////////////
