@@ -242,7 +242,7 @@ vm_handle_wp (struct page *page UNUSED) {
 
 /* Checks if the given page with address PGADDR is the one on top of a stack
  * page. */
-static bool
+/*static bool
 is_stack_pg (void *pgaddr, void *esp, struct supplemental_page_table *spt) {
 	struct page *page;
 	esp = pg_round_down (esp);
@@ -257,7 +257,7 @@ is_stack_pg (void *pgaddr, void *esp, struct supplemental_page_table *spt) {
 			|| ((page = spt_find_page (spt, pgaddr - 1))
 					&& page->operations->type == VM_ANON
 					&& page->anon.a_type == ANON_STACK);
-}
+}*/
 
 
 /* Return true on success */
@@ -275,7 +275,7 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr, bool user,
 			page = spt_find_page (spt, pg_va);
 			if (!page) { //Unexisting page
 				/* Recover if stack overflow. */
-				if (addr >= (void*)f->rsp - 8 && addr <= USER_STACK)////////////////////TESTING
+				if (addr >= (void*)f->rsp - 8 && addr <= (void*)USER_STACK)////////////////////TESTING
 				//if (addr >= (void*)f->rsp - 8 && is_stack_pg (pg_va, (void*)f->rsp, spt))
 					return vm_stack_growth (addr);
 				return false; //Unexisting non-stack page

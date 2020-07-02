@@ -823,10 +823,8 @@ valid_user_addr (struct intr_frame *f, const uint8_t *addr_, bool write) {
 
 	//////////////////////////////////////////////////////////////////////////////TESTING
 	if (is_user_vaddr (addr)) {
-		printf("valid_user_addr: addr: %p\n", addr);
 		if (!page)
 			return vm_try_handle_fault (f, addr, true, write, true);
-		printf("valid_user_addr: Page found\n");
 		return (!write || page->writable)
 				&& (pml4_get_page (curr->pml4, page->va)
 						|| vm_claim_page (page->va, &curr->spt));
