@@ -249,6 +249,8 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr, bool user,
 	void *pg_va = pg_round_down (addr);
 
 	if (user) {
+		if (!is_user_vaddr (pg_va))
+			return false;
 		if (not_present) {
 			page = spt_find_page (spt, pg_va);
 			if (!page) { //Unexisting page
@@ -256,10 +258,7 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr, bool user,
 				////////////////////////////////////////////////////////////////////////TESTING
 				pg_va = pg_round_up (addr);
 				ASSERT (pg_va >= addr);
-				if (addr >= (void*)f->rsp - 8 /////////////////////////////////////////////////Has issues for pt-big-stack-obj
-						&& (page = spt_find_page (spt, pg_va))
-						&& page->operations->type == VM_ANON
-						&& page->anon.a_type == ANON_STACK)
+				if (addr >= (void*)f->rsp - 8)
 					return vm_stack_growth (addr);
 				///////////////////////////////////////////////////////////////////////////////
 				return false; //Unexisting non-stack page
