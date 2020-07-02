@@ -821,7 +821,6 @@ valid_user_addr (struct intr_frame *f, const uint8_t *addr_, bool write) {
 
 	ASSERT (f);
 
-	//////////////////////////////////////////////////////////////////////////////TESTING
 	if (is_user_vaddr (addr)) {
 		if (!page)
 			return vm_try_handle_fault (f, addr, true, write, true);
@@ -830,8 +829,4 @@ valid_user_addr (struct intr_frame *f, const uint8_t *addr_, bool write) {
 						|| vm_claim_page (page->va, &curr->spt));
 	}
 	return false;
-	/////////////////////////////////////////////////////////////////////////////////////
-	//return (page && is_user_vaddr(addr) && (!write || page->writable)
-	//		&& (pml4_get_page (curr->pml4, page->va)
-	//				|| vm_claim_page (page->va, &curr->spt)));
 }
