@@ -240,6 +240,22 @@ vm_handle_wp (struct page *page UNUSED) {
 	ASSERT (0);///////////////////////////////////////////////////////////////////Not implemented
 }
 
+/* Checks if the given page with address PGADDR is the one on top of a stack
+ * page. */
+static bool
+pg_above_stack (void *pgaddr, void *esp) {
+	struct page *page;
+
+	ASSERT (vm_is_page_addr (pgaddr) && is_user_vaddr (pgaddr));
+	ASSERT (esp && is_user_vaddr (esp));
+
+	return pgaddr == pg_round_up (esp)
+			|| ((page = spt_find_page (spt, pgaddr - 1))
+					&& page->operations->type == VM_ANON
+					&& page->anon.a_type == ANON_STACK);
+}
+
+
 /* Return true on success */
 bool
 vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr, bool user,
@@ -256,11 +272,9 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr, bool user,
 			if (!page) { //Unexisting page
 				/* Recover if stack overflow. */
 				////////////////////////////////////////////////////////////////////////TESTING
-				pg_va = pg_round_up (addr);
-				ASSERT (pg_va >= addr);
-				if (addr >= (void*)f->rsp - 8) {
-					//printf("vm_try_handle_fault: Growing stack: pgaddr: %p, esp_up: %p, esp_dwn: %p\n", pg_va, pg_round_up((void*)f->rsp), pg_round_down((void*)f->rsp));
-					printf("vm_try_handle_fault: pgaddr: %p, page below is stack: %d\n", pg_va, ((page = spt_find_page (spt, pg_va - 1)) && page->operations->type == VM_ANON && page->anon.a_type == ANON_STACK) || pg_va == pg_round_up((void*)f->rsp));
+				if (addr >= (void*)f->rsp - 8){ //&& pg_above_stack (pg_va, (void*)f->rsp)) {
+					printf("vm_try_handle_fault: pgaddr: %p, esp_up: %p, esp_dwn: %p\n", pg_va, pg_round_up((void*)f->rsp), pg_round_down((void*)f->rsp));
+					//printf("vm_try_handle_fault: pgaddr: %p, page below is stack: %d\n", pg_va);
 					return vm_stack_growth (addr);
 				}
 				///////////////////////////////////////////////////////////////////////////////
